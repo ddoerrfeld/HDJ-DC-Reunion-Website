@@ -45,3 +45,7 @@ next-env.d.ts
 /test-results/
 /playwright-report/
 /screenshots/
+
+# yearbook ingest output (scans never enter this repo)
+/.yearbook-build/
+.wrangler/

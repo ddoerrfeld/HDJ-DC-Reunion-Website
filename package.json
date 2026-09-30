@@ -16,7 +16,11 @@
     "db:reset": "supabase db reset",
     "db:seed:generate": "node scripts/generate-seed.mts",
     "db:types": "supabase gen types typescript --local > lib/supabase/database.types.ts",
-    "db:lint": "supabase db lint --level warning"
+    "db:lint": "supabase db lint --level warning",
+    "yearbook:ingest": "node scripts/ingest-yearbook.mts --ocr",
+    "yearbook:roster": "node scripts/extract-roster.mts",
+    "yearbook:deploy": "cd yearbook-cdn && wrangler deploy",
+    "yearbook:cdn-dev": "node scripts/yearbook-cdn-dev.mts"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.117.2",
@@ -41,7 +45,8 @@
     "eslint-config-next": "16.3.8",
     "supabase": "^2.118.0",
     "tailwindcss": "^4",
-    "typescript": "^5"
+    "typescript": "^5",
+    "wrangler": "^4.145.0"
   },
   "overrides": {
     "playwright-core": "1.56.1"

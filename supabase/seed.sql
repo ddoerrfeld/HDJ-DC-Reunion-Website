@@ -13,18 +13,24 @@ insert into public.event_items (slug, day, starts_at, ends_at, title, descriptio
   ('sun-brunch', '2027-10-10', null, null, 'Farewell Breakfast/Brunch', '', null, null, false, null, false, null, true, null, false, null, false, true, 90)
 on conflict (slug) do nothing;
 
+-- A setting still unset (null) picks up a newly decided default; set values are kept.
 insert into public.settings (key, value, is_public) values
   ('rsvp_deadline', 'null'::jsonb, true),
   ('refund_policy_md', 'null'::jsonb, true),
   ('refund_cutoff_date', 'null'::jsonb, true),
-  ('organizer_contact_email', 'null'::jsonb, true),
+  ('organizer_contact_email', '"reunion@crownjacobs77.com"'::jsonb, true),
   ('faq_md', 'null'::jsonb, true),
   ('feature_flags', '{"in_memoriam":false,"faq":false,"yearbook_ocr":false}'::jsonb, true),
   ('section_gate_enabled', 'true'::jsonb, false),
   ('section_gate_passcode_hash', 'null'::jsonb, false)
-on conflict (key) do nothing;
+on conflict (key) do update set value = excluded.value
+  where public.settings.value = 'null'::jsonb and excluded.value <> 'null'::jsonb;
 
-insert into public.yearbook_books (school, title) values
-  ('crown', 'Irving Crown High School — 1977'),
-  ('jacobs', 'Harry D. Jacobs High School — 1977')
-on conflict (school) do nothing;
+-- Yearbooks: fill the seniors range only while unset (the organizer can edit it).
+insert into public.yearbook_books (school, title, seniors_start_seq, seniors_end_seq) values
+  ('jacobs', 'Eyrie 1977', 112, 123),
+  ('crown', 'Valhallan 1977', 88, 103)
+on conflict (school) do update set
+  title = case when public.yearbook_books.title like '% — 1977' then excluded.title else public.yearbook_books.title end,
+  seniors_start_seq = coalesce(public.yearbook_books.seniors_start_seq, excluded.seniors_start_seq),
+  seniors_end_seq = coalesce(public.yearbook_books.seniors_end_seq, excluded.seniors_end_seq);

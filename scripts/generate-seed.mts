@@ -6,6 +6,7 @@
 import { writeFile } from "node:fs/promises";
 import { EVENT_ITEMS_SEED } from "../lib/content/event-seed.ts";
 import { SETTINGS_SEED } from "../lib/content/settings-seed.ts";
+import { YEARBOOK_BOOKS_SEED } from "../lib/content/yearbook-seed.ts";
 
 const lit = (v: string | number | boolean | null): string => {
   if (v === null) return "null";
@@ -41,14 +42,19 @@ insert into public.event_items (${eventColumns.join(", ")}) values
 ${eventRows.map((r) => `  (${r})`).join(",\n")}
 on conflict (slug) do nothing;
 
+-- A setting still unset (null) picks up a newly decided default; set values are kept.
 insert into public.settings (key, value, is_public) values
 ${settingsRows.map((r) => `  ${r}`).join(",\n")}
-on conflict (key) do nothing;
+on conflict (key) do update set value = excluded.value
+  where public.settings.value = 'null'::jsonb and excluded.value <> 'null'::jsonb;
 
-insert into public.yearbook_books (school, title) values
-  ('crown', 'Irving Crown High School — 1977'),
-  ('jacobs', 'Harry D. Jacobs High School — 1977')
-on conflict (school) do nothing;
+-- Yearbooks: fill the seniors range only while unset (the organizer can edit it).
+insert into public.yearbook_books (school, title, seniors_start_seq, seniors_end_seq) values
+${YEARBOOK_BOOKS_SEED.map((b) => `  (${[b.school, b.title, b.seniorsStartSeq, b.seniorsEndSeq].map(lit).join(", ")})`).join(",\n")}
+on conflict (school) do update set
+  title = case when public.yearbook_books.title like '% — 1977' then excluded.title else public.yearbook_books.title end,
+  seniors_start_seq = coalesce(public.yearbook_books.seniors_start_seq, excluded.seniors_start_seq),
+  seniors_end_seq = coalesce(public.yearbook_books.seniors_end_seq, excluded.seniors_end_seq);
 `;
 
 await writeFile("supabase/seed.sql", sql);

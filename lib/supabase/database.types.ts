@@ -38,17 +38,42 @@ export type Database = {
                   ]
                 },"attendees": {
                   Row: {
-                    "city": string | null,"created_at": string,"current_last_name": string | null,"edit_token_hash": string,"email": string,"first_name": string,"grad_school": Database["public"]['Enums']["grad_school"],"hs_last_name": string,"id": string,"nickname": string | null,"phone": string | null,"photo_hidden": boolean,"photo_path": string | null,"show_in_directory": boolean,"state": string | null,"status": Database["public"]['Enums']["attendee_status"],"then_photo_path": string | null,"updated_at": string,"yearbook_crop": Json | null,"yearbook_page_id": string | null
+                    "city": string | null,"classmate_id": string | null,"classmate_status": Database["public"]['Enums']["classmate_status"],"created_at": string,"current_last_name": string | null,"edit_token_hash": string,"email": string,"first_name": string,"grad_school": Database["public"]['Enums']["grad_school"],"hs_last_name": string,"id": string,"nickname": string | null,"phone": string | null,"photo_hidden": boolean,"photo_path": string | null,"show_in_directory": boolean,"state": string | null,"status": Database["public"]['Enums']["attendee_status"],"then_photo_path": string | null,"updated_at": string,"yearbook_crop": Json | null,"yearbook_page_id": string | null
                   }
                   Insert: {
-                    "city"?: string | null,"created_at"?: string,"current_last_name"?: string | null,"edit_token_hash": string,"email": string,"first_name": string,"grad_school": Database["public"]['Enums']["grad_school"],"hs_last_name": string,"id"?: string,"nickname"?: string | null,"phone"?: string | null,"photo_hidden"?: boolean,"photo_path"?: string | null,"show_in_directory"?: boolean,"state"?: string | null,"status"?: Database["public"]['Enums']["attendee_status"],"then_photo_path"?: string | null,"updated_at"?: string,"yearbook_crop"?: Json | null,"yearbook_page_id"?: string | null
+                    "city"?: string | null,"classmate_id"?: string | null,"classmate_status"?: Database["public"]['Enums']["classmate_status"],"created_at"?: string,"current_last_name"?: string | null,"edit_token_hash": string,"email": string,"first_name": string,"grad_school": Database["public"]['Enums']["grad_school"],"hs_last_name": string,"id"?: string,"nickname"?: string | null,"phone"?: string | null,"photo_hidden"?: boolean,"photo_path"?: string | null,"show_in_directory"?: boolean,"state"?: string | null,"status"?: Database["public"]['Enums']["attendee_status"],"then_photo_path"?: string | null,"updated_at"?: string,"yearbook_crop"?: Json | null,"yearbook_page_id"?: string | null
                   }
                   Update: {
-                    "city"?: string | null,"created_at"?: string,"current_last_name"?: string | null,"edit_token_hash"?: string,"email"?: string,"first_name"?: string,"grad_school"?: Database["public"]['Enums']["grad_school"],"hs_last_name"?: string,"id"?: string,"nickname"?: string | null,"phone"?: string | null,"photo_hidden"?: boolean,"photo_path"?: string | null,"show_in_directory"?: boolean,"state"?: string | null,"status"?: Database["public"]['Enums']["attendee_status"],"then_photo_path"?: string | null,"updated_at"?: string,"yearbook_crop"?: Json | null,"yearbook_page_id"?: string | null
+                    "city"?: string | null,"classmate_id"?: string | null,"classmate_status"?: Database["public"]['Enums']["classmate_status"],"created_at"?: string,"current_last_name"?: string | null,"edit_token_hash"?: string,"email"?: string,"first_name"?: string,"grad_school"?: Database["public"]['Enums']["grad_school"],"hs_last_name"?: string,"id"?: string,"nickname"?: string | null,"phone"?: string | null,"photo_hidden"?: boolean,"photo_path"?: string | null,"show_in_directory"?: boolean,"state"?: string | null,"status"?: Database["public"]['Enums']["attendee_status"],"then_photo_path"?: string | null,"updated_at"?: string,"yearbook_crop"?: Json | null,"yearbook_page_id"?: string | null
                   }
                   Relationships: [
                     {
+      foreignKeyName: "attendees_classmate_id_fkey"
+      columns: ["classmate_id"]
+isOneToOne: false
+      referencedRelation: "classmates"
+      referencedColumns: ["id"]
+    },{
       foreignKeyName: "attendees_yearbook_page_id_fkey"
+      columns: ["yearbook_page_id"]
+isOneToOne: false
+      referencedRelation: "yearbook_pages"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"classmates": {
+                  Row: {
+                    "created_at": string,"first_name": string,"id": string,"last_key": string | null,"last_name": string,"school": Database["public"]['Enums']["yearbook_school"],"source": string,"yearbook_page_id": string | null
+                  }
+                  Insert: {
+                    "created_at"?: string,"first_name": string,"id"?: string,"last_key"?: never,"last_name": string,"school": Database["public"]['Enums']["yearbook_school"],"source"?: string,"yearbook_page_id"?: string | null
+                  }
+                  Update: {
+                    "created_at"?: string,"first_name"?: string,"id"?: string,"last_key"?: never,"last_name"?: string,"school"?: Database["public"]['Enums']["yearbook_school"],"source"?: string,"yearbook_page_id"?: string | null
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "classmates_yearbook_page_id_fkey"
       columns: ["yearbook_page_id"]
 isOneToOne: false
       referencedRelation: "yearbook_pages"
@@ -291,12 +316,18 @@ isOneToOne: false
 "rsvp_rotate_token":
 { Args: { "p_email": string,"p_new_hash": string }; Returns: Json
                            },
+"rsvp_set_classmate":
+{ Args: { "p_attendee_id": string,"p_classmate_id": string,"p_status": Database["public"]['Enums']["classmate_status"] }; Returns: undefined
+                           },
+"rsvp_set_yearbook_photo":
+{ Args: { "p_attendee_id": string,"p_crop": Json,"p_page_id": string,"p_then_path": string }; Returns: string
+                           },
 "rsvp_update":
 { Args: { "p": Json,"p_token_hash": string }; Returns: Json
                            }
           }
           Enums: {
-            "attendee_status": "active"|"cancelled","grad_school": "crown"|"jacobs"|"other","payment_status": "pending"|"paid"|"expired"|"refunded"|"offline","registration_status": "confirmed"|"pending_payment"|"pending_offline"|"waitlist"|"cancelled","yearbook_school": "crown"|"jacobs"
+            "attendee_status": "active"|"cancelled","classmate_status": "matched"|"pending"|"approved","grad_school": "crown"|"jacobs"|"other","payment_status": "pending"|"paid"|"expired"|"refunded"|"offline","registration_status": "confirmed"|"pending_payment"|"pending_offline"|"waitlist"|"cancelled","yearbook_school": "crown"|"jacobs"
           }
           CompositeTypes: {
             [_ in never]: never
@@ -416,7 +447,7 @@ export const Constants = {
           }
         },"public": {
           Enums: {
-            "attendee_status": ["active", "cancelled"],"grad_school": ["crown", "jacobs", "other"],"payment_status": ["pending", "paid", "expired", "refunded", "offline"],"registration_status": ["confirmed", "pending_payment", "pending_offline", "waitlist", "cancelled"],"yearbook_school": ["crown", "jacobs"]
+            "attendee_status": ["active", "cancelled"],"classmate_status": ["matched", "pending", "approved"],"grad_school": ["crown", "jacobs", "other"],"payment_status": ["pending", "paid", "expired", "refunded", "offline"],"registration_status": ["confirmed", "pending_payment", "pending_offline", "waitlist", "cancelled"],"yearbook_school": ["crown", "jacobs"]
           }
         }
 } as const
