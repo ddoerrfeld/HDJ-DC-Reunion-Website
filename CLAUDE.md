@@ -50,7 +50,7 @@ Fonts (via `next/font`): **Graduate** (display, uppercase, +2% tracking, never b
 | 2 — Data Layer & Weekend Page | ✅ Approved by owner |
 | 3 — RSVP (no payment) | ✅ Approved by owner (production Supabase, Resend, Turnstile keys not yet connected) |
 | 4 — Payments | ❌ Cancelled by owner — no payment processor. Paid events show a “Payment details coming soon” placeholder. |
-| 5 — Yearbooks (request assets first) | Waiting for yearbook files (owner uploading to a separate private GitHub repo) |
+| 5 — Yearbooks (request assets first) | Files received; contact sheets awaiting owner approval |
 | 6 — Directory | Not started |
 | 7 — Admin | Not started |
 | 8 — Hardening & Launch | Not started |
@@ -88,9 +88,10 @@ The owner deferred to engineering judgment on every issue flagged in the Phase 1
 ## Implementation notes
 
 - Next.js 16: middleware is `proxy.ts`. Read `node_modules/next/dist/docs/` before using unfamiliar APIs.
-- Domain: **crownjacobs77.com** (registered at Cloudflare). `SITE_URL` in `lib/site.ts`. As of 2026-09-30 the domain returns Vercel `NOT_FOUND`: no production deployment yet (Vercel's production branch must be set to this repo's working branch, or `main` created).
-- Production Supabase (`dbaoigdmkfzkxwvzifmq`, us-east-2): all four migrations applied 2026-09-30 via the Management API and recorded in `supabase_migrations.schema_migrations`. **`supabase/seed.sql` not yet loaded** (needs owner go-ahead). Tokens are read from environment variables (`SUPABASE_ACCESS_TOKEN`, `VERCEL_TOKEN`, `CLOUDFLARE_API_TOKEN`, `RESEND_API_KEY`), never pasted into chat or committed.
-- Yearbook scans: `ddoerrfeld/crownjacobs77-yearbooks` (`jacobs-1977/`, `crown-1977/`, files numbered cover to cover). Clone it with `add_repo` (access: push) to `/home/user/crownjacobs77-yearbooks`.
+- Domain: **crownjacobs77.com** (registered at Cloudflare; DNS in Cloudflare zone `2b56fbdcd38de5df3d9a7d06aaf6dc1a`). `SITE_URL` in `lib/site.ts`. Vercel project `prj_ocpbHF5JKZJUq5uWB0Y7YkN3TM60` (team `team_O4ABC8YJQOXF48wCGbFEs4TG`), production branch = this working branch. `vercel.json` pins `"framework": "nextjs"` (the project had been created as "Other", which served 404s). Vercel currently redirects apex → www; owner to flip so www → apex (canonical is the apex).
+- Vercel env set 2026-09-30: SITE_STAGE=preview, SITE_PASSCODE, SITE_GATE_SECRET, NEXT_PUBLIC_SITE_URL, SUPABASE_URL, REVALIDATE_SECRET, CRON_SECRET, EMAIL_FROM. **Still missing:** SUPABASE_ANON_KEY, SUPABASE_SERVICE_ROLE_KEY (owner copies from Supabase), RESEND_API_KEY (domain not yet verified in Resend), Turnstile keys.
+- Production Supabase (`dbaoigdmkfzkxwvzifmq`, us-east-2): four migrations + `seed.sql` applied 2026-09-30 via the Management API (recorded in `supabase_migrations.schema_migrations`); 14 tables, all RLS. Security advisor warnings for anon-executable `is_admin()` / `event_availability()` are by design. Tokens are read from environment variables (`SUPABASE_ACCESS_TOKEN`, `VERCEL_TOKEN`, `CLOUDFLARE_API_TOKEN` (account token, `cfat_`), `RESEND_API_KEY` (send-only)), never pasted into chat or committed.
+- Yearbook scans: private repo `ddoerrfeld/crownjacobs77-yearbooks` → `/home/user/crownjacobs77-yearbooks` (`add_repo` access: push). **Never copy scans into this repo.** Single pages, 1100 px wide JPEG. Jacobs (“Eyrie 1977”): 184 files; 1 front cover, 2–4 & 181–183 endpapers, 184 back cover, seniors 112–123, period HDJ mark on 179. Crown (“People”, Viking cover art): 174 files; 1 front cover, 2–3 endpapers, 4 blank, 168–173 blank, 174 back cover, seniors 88–103. Contact sheets sent to owner 2026-09-30, awaiting approval.
 - Data: `lib/data/*.ts` is the only data-access layer (Supabase via `lib/supabase/server.ts`). Seed facts live in `lib/content/*-seed.ts`; `supabase/seed.sql` is generated from them (CI fails if stale).
 - Local DB: `npm run db:start` (Docker). If Docker isn’t running in a cloud session: `sudo dockerd &` first. Tests mutate the local DB via `psql` (`tests/db.ts`) and restore it.
 - After changing migrations: `npm run db:reset && npm run db:types`.
