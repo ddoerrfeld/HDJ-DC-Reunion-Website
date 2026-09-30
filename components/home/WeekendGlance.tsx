@@ -3,32 +3,8 @@ import Link from "next/link";
 import { Badge, ToBeConfirmed } from "@/components/ui/Badge";
 import { ComingSoonCard } from "@/components/ui/ComingSoonCard";
 import { SectionHeading } from "@/components/ui/SectionHeading";
-import { getEventDays, type EventItem } from "@/lib/data/events";
+import { formatPrice, getEventDays, groupSlots, isPlaceholderItem, type EventItem } from "@/lib/data/events";
 import { formatDayName, formatMonthDay, formatTimeRange } from "@/lib/format";
-
-/** Items sharing a choice_group are alternatives in one time slot (SPEC §6). */
-function groupSlots(items: EventItem[]): EventItem[][] {
-  const slots: EventItem[][] = [];
-  const byGroup = new Map<string, EventItem[]>();
-  for (const item of items) {
-    if (!item.choiceGroup) {
-      slots.push([item]);
-      continue;
-    }
-    const existing = byGroup.get(item.choiceGroup);
-    if (existing) existing.push(item);
-    else {
-      const slot = [item];
-      byGroup.set(item.choiceGroup, slot);
-      slots.push(slot);
-    }
-  }
-  return slots;
-}
-
-function isPlaceholder(item: EventItem) {
-  return !item.startsAt && !item.locationName;
-}
 
 function Slot({ slot }: { slot: EventItem[] }) {
   const [first] = slot;
@@ -56,9 +32,11 @@ function Slot({ slot }: { slot: EventItem[] }) {
           {!item.confirmed || item.requiresPayment ? (
             <p className="mt-2 flex flex-wrap gap-2">
               {item.requiresPayment ? (
-                <Badge tone="paid">{item.priceCents === null ? "Paid · price coming soon" : "Paid"}</Badge>
+                <Badge tone="paid">
+                  {item.priceCents === null ? "Paid · price coming soon" : `${formatPrice(item.priceCents)} per person`}
+                </Badge>
               ) : null}
-              {!item.confirmed ? <ToBeConfirmed /> : null}
+              {!item.confirmed ? <ToBeConfirmed note={item.unconfirmedNote} /> : null}
             </p>
           ) : null}
         </div>
@@ -78,8 +56,8 @@ export async function WeekendGlance() {
 
         <ol className="mt-10 grid gap-6 lg:grid-cols-3">
           {days.map(({ day, items }) => {
-            const scheduled = items.filter((item) => !isPlaceholder(item));
-            const pending = items.filter(isPlaceholder);
+            const scheduled = items.filter((item) => !isPlaceholderItem(item));
+            const pending = items.filter(isPlaceholderItem);
             return (
               <li key={day} className="card flex flex-col p-6 md:p-8">
                 <h3 className="flex items-baseline justify-between gap-3 border-b-2 border-ink pb-3">

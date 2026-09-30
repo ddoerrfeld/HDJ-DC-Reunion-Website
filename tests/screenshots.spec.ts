@@ -4,9 +4,10 @@
  * 720 × 450 CSS-px viewport at device scale factor 2). Run: npm run screenshots
  */
 import { test } from "@playwright/test";
+import { revalidate, setLodging } from "./db";
 import { unlock } from "./helpers";
 
-const OUT = "screenshots/phase-1";
+const OUT = `screenshots/${process.env.SHOT_DIR ?? "phase-2"}`;
 const SIZES = [
   { name: "375", viewport: { width: 375, height: 812 }, deviceScaleFactor: 2 },
   { name: "768", viewport: { width: 768, height: 1024 }, deviceScaleFactor: 1 },
@@ -15,10 +16,19 @@ const SIZES = [
 ];
 const PAGES = [
   { slug: "home", path: "/" },
+  { slug: "weekend", path: "/weekend" },
   { slug: "styleguide", path: "/styleguide" },
-  { slug: "weekend-placeholder", path: "/weekend" },
   { slug: "404", path: "/this-page-does-not-exist" },
 ];
+
+// /stay in each acceptance state (SPEC §15 Phase 2), using clearly fictional test rows.
+const STAY_STATES = [
+  { slug: "stay-0-rows", rows: [] },
+  { slug: "stay-1-official", rows: ["official"] },
+  { slug: "stay-3-mixed", rows: ["official", "nearbyOpen", "nearbyClosed"] },
+] as const;
+
+test.describe.configure({ mode: "serial" });
 
 for (const size of SIZES) {
   test.describe(size.name, () => {
@@ -39,6 +49,19 @@ for (const size of SIZES) {
         await page.screenshot({ path: `${OUT}/${target.slug}-${size.name}.png`, fullPage: true });
       });
     }
+
+    test("stay states", async ({ page, request }) => {
+      await unlock(page);
+      for (const state of STAY_STATES) {
+        setLodging([...state.rows]);
+        await revalidate(request);
+        await page.goto("/stay");
+        await page.evaluate(() => document.fonts.ready);
+        await page.screenshot({ path: `${OUT}/${state.slug}-${size.name}.png`, fullPage: true });
+      }
+      setLodging([]);
+      await revalidate(request);
+    });
 
     test("mobile menu", async ({ page }) => {
       test.skip(size.viewport.width >= 1024, "desktop shows the full nav");

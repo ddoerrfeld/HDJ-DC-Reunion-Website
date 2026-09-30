@@ -19,6 +19,9 @@ jobs:
       SITE_PASSCODE: golden vikings
       SITE_GATE_SECRET: ci-only-secret-0123456789abcdefghijklmnopqrstuvwxyz
       NEXT_TELEMETRY_DISABLED: "1"
+      REVALIDATE_SECRET: ci-only-revalidate-secret
+      CRON_SECRET: ci-only-cron-secret
+      SUPABASE_DB_URL: postgresql://postgres:postgres@127.0.0.1:54322/postgres
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -30,11 +33,20 @@ jobs:
         run: npm run lint
       - name: Typecheck
         run: npm run typecheck
+      - name: Start local Supabase (migrations + seed)
+        run: npm run db:start
+      - name: Export Supabase connection
+        run: |
+          npx supabase status -o env | sed -n 's/^API_URL=/SUPABASE_URL=/p; s/^PUBLISHABLE_KEY=/SUPABASE_ANON_KEY=/p' | tr -d '"' >> "$GITHUB_ENV"
+      - name: Database lint
+        run: npm run db:lint
+      - name: Seed file is up to date with lib/content
+        run: npm run db:seed:generate && git diff --exit-code supabase/seed.sql
       - name: Build
         run: npm run build
       - name: Install Playwright browser
         run: npx playwright install --with-deps chromium
-      - name: Gate, hero and axe accessibility tests (WCAG 2.2 AA)
+      - name: Gate, hero, weekend, stay, calendar and axe (WCAG 2.2 AA) tests
         run: npx playwright test --project=chromium
       - uses: actions/upload-artifact@v4
         if: failure()

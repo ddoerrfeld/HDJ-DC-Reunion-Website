@@ -9,6 +9,9 @@ import { Button } from "@/components/ui/Button";
 import { ComingSoonCard } from "@/components/ui/ComingSoonCard";
 import { ChoiceCard, SplitPill, TextField } from "@/components/ui/Field";
 import { PhotoFrame, type School } from "@/components/ui/PhotoFrame";
+import { CutoffChip } from "@/components/stay/LodgingCard";
+import { EventCard } from "@/components/weekend/EventCard";
+import { EVENT_ITEMS_SEED } from "@/lib/content/event-seed";
 import { isPreview } from "@/lib/site";
 
 export const metadata: Metadata = { title: "Style guide", robots: { index: false, follow: false } };
@@ -296,6 +299,22 @@ export default function StyleguidePage() {
           </div>
         </div>
         <Spec>Skeleton loader shaped like an attendee card (above). Placeholders use the seam band and never look broken.</Spec>
+      </Section>
+
+      <Section id="sg-events" title="Event cards & hotel chips">
+        <div className="flex flex-col gap-6">
+          {EVENT_ITEMS_SEED.filter((item) => ["fri-pregame", "sat-dinner"].includes(item.slug)).map((item) => (
+            <EventCard key={item.slug} item={item} />
+          ))}
+          <div className="flex flex-wrap gap-4">
+            <CutoffChip cutoffDate="2027-09-08" />
+            <CutoffChip cutoffDate="2020-01-01" />
+          </div>
+        </div>
+        <Spec>
+          One event card for every item on /weekend: time column, title, price and confirmation tags,
+          place, description, then Add to calendar and Map. Hotel cutoff chip before and after the date.
+        </Spec>
       </Section>
 
       <Section id="sg-photos" title="Photo frames & attendee cards">

@@ -46,8 +46,8 @@ Fonts (via `next/font`): **Graduate** (display, uppercase, +2% tracking, never b
 
 | Phase | Status |
 |---|---|
-| 1 — Foundation & Design System | Built — awaiting owner approval of `/styleguide` and screenshots |
-| 2 — Data Layer & Weekend Page | Not started |
+| 1 — Foundation & Design System | ✅ Approved by owner |
+| 2 — Data Layer & Weekend Page | Built — awaiting owner approval (production Supabase not yet connected) |
 | 3 — RSVP (no payment) | Not started |
 | 4 — Payments | Not started |
 | 5 — Yearbooks (request assets first) | Not started |
@@ -70,12 +70,19 @@ The owner deferred to engineering judgment on every issue flagged in the Phase 1
 - **Light text that can cross the gold seam gets a tight dark halo** (`--seam-halo`); white on gold is only 2.17:1.
 - **Small text floored at 16 px** (scale step would be 14.4 px).
 - **Placeholder stub pages** for nav routes not yet built (no 404s from the nav).
+- **`event_items.unconfirmed_note`** (added column): admin-editable text shown instead of "To be confirmed" (e.g. "Schedule to be confirmed by the schools") — no hard-coded football logic.
+- **Pages refresh every 60 s** (ISR) plus `/api/revalidate` for instant refresh; public reads use the anon key under RLS, never the service role.
+- **Seed fallback**: with no Supabase env in *preview*, pages render the SPEC §6 seed; in *production* that is a hard error.
+- **Keep-alive cron built in Phase 2** (not 8): the free-tier pause risk starts the day the project is created.
 - **Later-phase decisions already made:** HEIC decoded server-side before the crop step (Phase 3); generic “we’ve emailed your link” response on duplicate RSVP (Phase 3); recommend dropping the card-surcharge option (Phase 4); custom CSS 3D page flip instead of unmaintained `react-pageflip` (Phase 5); flag R2 vs Supabase egress (Phase 5); Postgres-backed rate limiting (Phase 8).
 
 ## Implementation notes
 
 - Next.js 16: middleware is `proxy.ts`. Read `node_modules/next/dist/docs/` before using unfamiliar APIs.
-- Event facts: `lib/content/event-seed.ts` (SPEC §6 only) behind `lib/data/events.ts` — Phase 2 swaps the data source to Supabase without touching callers.
+- Domain: **crownjacobs77.com** (registered at Cloudflare). `SITE_URL` in `lib/site.ts`.
+- Data: `lib/data/*.ts` is the only data-access layer (Supabase via `lib/supabase/server.ts`). Seed facts live in `lib/content/*-seed.ts`; `supabase/seed.sql` is generated from them (CI fails if stale).
+- Local DB: `npm run db:start` (Docker). If Docker isn’t running in a cloud session: `sudo dockerd &` first. Tests mutate the local DB via `psql` (`tests/db.ts`) and restore it.
+- After changing migrations: `npm run db:reset && npm run db:types`.
 - Hero: CSS-only timeline in `components/home/hero.css`; `heroBootScript` sets `html[data-hero]` before paint. Default styles are the final state.
 - Tailwind v4 theme is locked to brand tokens (`--color-*: initial`, `--text-*: initial`): no off-palette colors or off-scale sizes.
 - Playwright is pinned to 1.56.1 to match the preinstalled Chromium (with an `overrides` entry for `playwright-core`).

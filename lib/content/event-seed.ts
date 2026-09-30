@@ -25,9 +25,13 @@ export interface EventItem {
   allowsGuests: boolean;
   capacity: number | null;
   confirmed: boolean;
+  /** Replaces the generic "To be confirmed" tag while confirmed = false. */
+  unconfirmedNote: string | null;
   halftimeEligible: boolean;
   visible: boolean;
   sort: number;
+  /** Set when loaded from the database; drives calendar-file SEQUENCE. */
+  updatedAt?: string;
 }
 
 const JACOBS_ADDRESS = "2601 Bunker Hill Dr, Algonquin, IL 60102";
@@ -50,6 +54,7 @@ export const EVENT_ITEMS_SEED: readonly EventItem[] = [
     allowsGuests: true,
     capacity: null,
     confirmed: true,
+    unconfirmedNote: null,
     halftimeEligible: false,
     visible: true,
     sort: 10,
@@ -70,6 +75,7 @@ export const EVENT_ITEMS_SEED: readonly EventItem[] = [
     allowsGuests: true,
     capacity: null,
     confirmed: true,
+    unconfirmedNote: null,
     halftimeEligible: false,
     visible: true,
     sort: 20,
@@ -91,6 +97,7 @@ export const EVENT_ITEMS_SEED: readonly EventItem[] = [
     allowsGuests: true,
     capacity: null,
     confirmed: true,
+    unconfirmedNote: null,
     halftimeEligible: false,
     visible: true,
     sort: 30,
@@ -111,6 +118,7 @@ export const EVENT_ITEMS_SEED: readonly EventItem[] = [
     allowsGuests: true,
     capacity: null,
     confirmed: false, // 2027 football schedule not yet confirmed by the schools
+    unconfirmedNote: "Schedule to be confirmed by the schools",
     halftimeEligible: true,
     visible: true,
     sort: 40,
@@ -131,6 +139,7 @@ export const EVENT_ITEMS_SEED: readonly EventItem[] = [
     allowsGuests: true,
     capacity: null,
     confirmed: false,
+    unconfirmedNote: "Schedule to be confirmed by the schools",
     halftimeEligible: true,
     visible: true,
     sort: 50,
@@ -151,6 +160,7 @@ export const EVENT_ITEMS_SEED: readonly EventItem[] = [
     allowsGuests: true,
     capacity: null,
     confirmed: true,
+    unconfirmedNote: null,
     halftimeEligible: false,
     visible: true,
     sort: 60,
@@ -171,6 +181,7 @@ export const EVENT_ITEMS_SEED: readonly EventItem[] = [
     allowsGuests: true,
     capacity: null,
     confirmed: true,
+    unconfirmedNote: null,
     halftimeEligible: false,
     visible: true,
     sort: 70,
@@ -191,6 +202,7 @@ export const EVENT_ITEMS_SEED: readonly EventItem[] = [
     allowsGuests: true,
     capacity: null,
     confirmed: false, // venue identity pending organizer confirmation
+    unconfirmedNote: "Venue to be confirmed",
     halftimeEligible: false,
     visible: true,
     sort: 80,
@@ -211,6 +223,7 @@ export const EVENT_ITEMS_SEED: readonly EventItem[] = [
     allowsGuests: true,
     capacity: null,
     confirmed: false,
+    unconfirmedNote: null,
     halftimeEligible: false,
     visible: true,
     sort: 90,

@@ -52,3 +52,14 @@ export function daysUntil(day: string, now = new Date()): number {
   }).format(now);
   return Math.round((dayToUtc(day).getTime() - dayToUtc(today).getTime()) / 86_400_000);
 }
+
+/** "September 8" (adds the year when it isn’t 2027). */
+export function formatLongDate(day: string): string {
+  const date = dayToUtc(day);
+  return new Intl.DateTimeFormat("en-US", {
+    month: "long",
+    day: "numeric",
+    ...(date.getUTCFullYear() === 2027 ? {} : { year: "numeric" }),
+    timeZone: "UTC",
+  }).format(date);
+}

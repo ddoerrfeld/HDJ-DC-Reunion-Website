@@ -20,7 +20,7 @@ export function Badge({ tone = "neutral", children }: { tone?: BadgeTone; childr
   );
 }
 
-/** Standard "To be confirmed" tag for items where confirmed = false (SPEC §6). */
-export function ToBeConfirmed() {
-  return <Badge tone="pending">To be confirmed</Badge>;
+/** Tag for items where confirmed = false (SPEC §6); the item's own note replaces the generic text. */
+export function ToBeConfirmed({ note }: { note?: string | null }) {
+  return <Badge tone="pending">{note || "To be confirmed"}</Badge>;
 }

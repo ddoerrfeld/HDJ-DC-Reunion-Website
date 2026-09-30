@@ -117,6 +117,7 @@ export function isGateExempt(pathname: string): boolean {
     pathname === "/admin" ||
     pathname.startsWith("/admin/") ||
     pathname.startsWith("/api/stripe/webhook") ||
+    pathname === "/api/revalidate" ||
     pathname.startsWith("/api/cron/")
   );
 }

@@ -11,13 +11,20 @@
     "test:e2e": "playwright test",
     "screenshots": "playwright test --project=screenshots",
     "icons": "node scripts/generate-icons.mts",
-    "check": "npm run lint && npm run typecheck"
+    "check": "npm run lint && npm run typecheck",
+    "db:start": "supabase start -x vector,logflare,imgproxy,edge-runtime,supavisor",
+    "db:reset": "supabase db reset",
+    "db:seed:generate": "node scripts/generate-seed.mts",
+    "db:types": "supabase gen types typescript --local > lib/supabase/database.types.ts",
+    "db:lint": "supabase db lint --level warning"
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.117.2",
     "lucide-react": "^1.49.0",
     "next": "16.3.8",
     "react": "19.2.8",
-    "react-dom": "19.2.8"
+    "react-dom": "19.2.8",
+    "react-markdown": "^10.1.0"
   },
   "devDependencies": {
     "@axe-core/playwright": "^4.13.0",
@@ -29,6 +36,7 @@
     "eslint": "^9",
     "eslint-config-next": "16.3.8",
     "sharp": "^0.35.5",
+    "supabase": "^2.118.0",
     "tailwindcss": "^4",
     "typescript": "^5"
   },

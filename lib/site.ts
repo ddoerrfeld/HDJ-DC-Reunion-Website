@@ -16,3 +16,6 @@ export function isPreview(): boolean {
 export const SITE_NAME = "Class of ’77 · 50-Year Reunion";
 export const SITE_DESCRIPTION =
   "Irving Crown & Harry D. Jacobs High Schools, Class of 1977 — together again October 8–10, 2027.";
+
+/** Canonical origin — used in calendar files, emails, and structured data. */
+export const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL ?? "https://crownjacobs77.com").replace(/\/$/, "");
