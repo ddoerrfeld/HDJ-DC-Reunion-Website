@@ -1,18 +1,128 @@
 import type { Metadata } from "next";
-import { PlaceholderPage } from "@/components/layout/PlaceholderPage";
+import Link from "next/link";
+import { SeamRule } from "@/components/brand/Seam";
+import { ButtonLink, Button } from "@/components/ui/Button";
+import { ComingSoonCard } from "@/components/ui/ComingSoonCard";
+import { TextField } from "@/components/ui/Field";
+import { getYearbookCovers, SCHOOL_NAMES } from "@/lib/data/yearbooks";
+import { safeNextPath } from "@/lib/gate";
+import { hasYearbookAccess } from "@/lib/yearbook/access";
+import type { YearbookSchool } from "@/lib/yearbook/types";
+import { verifyClassmateAction } from "./actions";
 
-export const metadata: Metadata = { title: "Yearbooks" };
+export const metadata: Metadata = {
+  title: "Yearbooks",
+  robots: { index: false, follow: false },
+};
+export const dynamic = "force-dynamic";
 
-export default function YearbooksPage() {
+const VERIFY_MESSAGES: Record<string, string> = {
+  missing: "Please enter both your first name and your last name from 1977.",
+  nomatch:
+    "We couldn’t find that name among the 1977 seniors. Try the first and last name you used in high school — or RSVP, and the organizer will confirm you by hand.",
+  limit: "Too many tries from this device. Please wait an hour, or email the organizer.",
+};
+
+const BOOK_ORDER: YearbookSchool[] = ["crown", "jacobs"];
+
+export default async function YearbooksPage({ searchParams }: { searchParams: Promise<Record<string, string | undefined>> }) {
+  const params = await searchParams;
+  const access = await hasYearbookAccess();
+  const covers = access ? await getYearbookCovers() : {};
+  const ready = BOOK_ORDER.every((s) => covers[s]);
+
   return (
-    <PlaceholderPage
-      eyebrow="The 1977 yearbooks"
-      title="Yearbooks"
-      intro="The Irving Crown and Harry D. Jacobs yearbooks, page by page, with zoom for reading every name."
-      cardTitle="The yearbook readers are being built"
-      showEmailNote={false}
-    >
-      <p>Both books will open here once they’ve been scanned.</p>
-    </PlaceholderPage>
+    <div className="container-page py-16 md:py-24">
+      <header className="flex flex-col gap-3">
+        <p className="type-eyebrow text-crown-blue-deep">The 1977 yearbooks</p>
+        <h1 className="type-display text-h1 text-ink md:text-display">Yearbooks</h1>
+        <SeamRule className="w-full max-w-72" />
+        <p className="measure text-lead text-ink">
+          Both books, page by page — the Crown <cite className="not-italic">Valhallan</cite> and the Jacobs{" "}
+          <cite className="not-italic">Eyrie</cite>. Zoom in close enough to read every name under every portrait.
+        </p>
+      </header>
+
+      {!access ? (
+        <ClassmateCheck error={params.verify ? VERIFY_MESSAGES[params.verify] : undefined} next={safeNextPath(params.next ?? "/yearbooks")} />
+      ) : !ready ? (
+        <div className="mt-10 max-w-3xl">
+          <ComingSoonCard title="The yearbook readers are being set up" headingLevel="h2" showEmailNote={false}>
+            <p>Both books have been scanned and will open here shortly.</p>
+          </ComingSoonCard>
+        </div>
+      ) : (
+        <ul className="mt-12 grid gap-12 sm:grid-cols-2 lg:max-w-5xl">
+          {BOOK_ORDER.map((school) => (
+            <li key={school} className="flex flex-col items-center gap-5 text-center">
+              <Link
+                href={`/yearbooks/${school}`}
+                className={`group block w-56 origin-bottom transition-transform duration-[var(--dur-enter)] ease-[var(--ease-out)] hover:-translate-y-1 sm:w-64 ${
+                  school === "crown" ? "rotate-[-2deg]" : "rotate-[2deg]"
+                }`}
+              >
+                {/* eslint-disable-next-line @next/next/no-img-element -- signed CDN image */}
+                <img
+                  src={covers[school]!.display}
+                  alt={`Cover of the ${SCHOOL_NAMES[school].short} yearbook`}
+                  width={1100}
+                  height={1440}
+                  className={`w-full rounded-r-sm shadow-[inset_6px_0_0_rgb(0_0_0/0.18),0_18px_36px_-16px_rgb(30_27_22/0.65)] ring-4 ${
+                    school === "crown" ? "ring-crown-blue" : "ring-jacobs-brown"
+                  }`}
+                />
+              </Link>
+              <div className="flex flex-col items-center gap-3">
+                <h2 className="text-h2 text-ink">{SCHOOL_NAMES[school].short}</h2>
+                <p className="text-body text-muted">{SCHOOL_NAMES[school].full}</p>
+                <ButtonLink href={`/yearbooks/${school}`} variant="secondary">
+                  Open the {school === "crown" ? "Crown" : "Jacobs"} yearbook
+                </ButtonLink>
+              </div>
+            </li>
+          ))}
+        </ul>
+      )}
+
+      {access && ready ? (
+        <aside className="mt-16 max-w-3xl rounded-card border-2 border-line bg-paper-raised p-6 shadow-card">
+          <h2 className="text-h3 text-ink">See yourself in ’77</h2>
+          <p className="mt-2 text-body text-ink">
+            When you RSVP, you can pick out your own senior portrait. It appears next to your current photo on
+            Who’s Coming — then and now.
+          </p>
+          <div className="mt-4">
+            <ButtonLink href="/rsvp">RSVP and find your photo</ButtonLink>
+          </div>
+        </aside>
+      ) : null}
+    </div>
+  );
+}
+
+function ClassmateCheck({ error, next }: { error?: string; next: string }) {
+  return (
+    <section aria-labelledby="classmate-check" className="mt-10 max-w-2xl rounded-card border-2 border-line bg-paper-raised p-6 shadow-card sm:p-8">
+      <h2 id="classmate-check" className="text-h2 text-ink">
+        Confirm you’re a classmate
+      </h2>
+      <p className="mt-2 text-body text-ink">
+        The yearbooks show every classmate, so they’re just for the Class of ’77. Enter your name as it was in
+        1977. If you’ve already RSVP’d, your private RSVP link opens the yearbooks too.
+      </p>
+      {error ? (
+        <p role="alert" className="mt-4 rounded-card border-l-4 border-jacobs-brown bg-jacobs-gold/25 p-4 font-semibold text-ink">
+          {error}
+        </p>
+      ) : null}
+      <form action={verifyClassmateAction} className="mt-6 flex flex-col gap-5">
+        <input type="hidden" name="next" value={next} />
+        <TextField id="verify-first" name="firstName" label="First name" autoComplete="given-name" required />
+        <TextField id="verify-last" name="lastName" label="Last name in 1977" hint="Your maiden name, if it has changed." autoComplete="family-name" required />
+        <div>
+          <Button type="submit">Open the yearbooks</Button>
+        </div>
+      </form>
+    </section>
   );
 }

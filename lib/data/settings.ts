@@ -29,3 +29,27 @@ export async function getPublicSettings(): Promise<PublicSettings> {
     rsvpDeadline: asString(map.get("rsvp_deadline")),
   };
 }
+
+export interface FeatureFlags {
+  inMemoriam: boolean;
+  faq: boolean;
+  yearbookOcr: boolean;
+}
+
+/** SPEC §2 optional features (organizer-controlled, default off). */
+export async function getFeatureFlags(): Promise<FeatureFlags> {
+  const db = publicDb();
+  const value: unknown = db
+    ? await db
+        .from("settings")
+        .select("value")
+        .eq("key", "feature_flags")
+        .maybeSingle()
+        .then(({ data, error }) => {
+          if (error) throw new Error(`Failed to load feature flags: ${error.message}`);
+          return data?.value;
+        })
+    : SETTINGS_SEED.find((s) => s.key === "feature_flags")?.value;
+  const flags = (value && typeof value === "object" ? value : {}) as Record<string, unknown>;
+  return { inMemoriam: flags.in_memoriam === true, faq: flags.faq === true, yearbookOcr: flags.yearbook_ocr === true };
+}

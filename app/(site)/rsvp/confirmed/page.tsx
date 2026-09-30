@@ -1,4 +1,4 @@
-import { BedDouble, MailCheck, Pencil } from "lucide-react";
+import { BedDouble, BookOpen, Hourglass, MailCheck, Pencil } from "lucide-react";
 import type { Metadata } from "next";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
@@ -10,6 +10,7 @@ import { ButtonLink } from "@/components/ui/Button";
 import { PhotoFrame } from "@/components/ui/PhotoFrame";
 import { getEventItems } from "@/lib/data/events";
 import { getRsvpByToken, summaryLines } from "@/lib/data/rsvp";
+import { REVIEW_NOTE } from "@/lib/email/templates";
 import { RSVP_COOKIE } from "@/lib/rsvp/token";
 
 export const metadata: Metadata = { title: "RSVP confirmed", robots: { index: false, follow: false } };
@@ -45,6 +46,18 @@ export default async function ConfirmedPage({
           </p>
         </RsvpHeader>
 
+        {saved.classmateStatus === "pending" ? (
+          <section aria-labelledby="review-title" className="flex gap-4 rounded-card border-l-4 border-crown-blue-deep bg-crown-blue/10 p-6">
+            <Hourglass size={28} strokeWidth={1.75} className="mt-1 shrink-0 text-crown-blue-deep" aria-hidden="true" />
+            <div>
+              <h2 id="review-title" className="text-lead font-bold text-ink">
+                The organizer will confirm you shortly
+              </h2>
+              <p className="mt-1 text-body text-ink">{REVIEW_NOTE.replace(/^One more thing: w/, "W")}</p>
+            </div>
+          </section>
+        ) : null}
+
         <section aria-labelledby="summary-title" className="card flex flex-col gap-6 p-6 md:p-8">
           <div className="flex items-center gap-5">
             <PhotoFrame school={saved.person.gradSchool} size={112}>
@@ -53,6 +66,13 @@ export default async function ConfirmedPage({
                 <img src={saved.photoUrl} alt="" width={512} height={512} className="absolute inset-0 size-full object-cover" />
               ) : undefined}
             </PhotoFrame>
+            {saved.yearbookPhoto?.url ? (
+              <figure className="flex flex-col items-center gap-1">
+                {/* eslint-disable-next-line @next/next/no-img-element -- rendered portrait in storage */}
+                <img src={saved.yearbookPhoto.url} alt="Your 1977 senior portrait" width={90} height={112} className="h-28 w-[90px] rounded-sm object-cover ring-1 ring-line" />
+                <figcaption className="text-small text-muted">1977</figcaption>
+              </figure>
+            ) : null}
             <h2 id="summary-title" className="text-h3 text-ink">
               Your weekend
             </h2>
@@ -87,6 +107,16 @@ export default async function ConfirmedPage({
               Edit your RSVP
             </ButtonLink>
           </div>
+          {saved.classmateStatus !== "pending" ? (
+            <div className="card flex flex-col gap-3 p-6">
+              <BookOpen size={28} strokeWidth={1.75} className="text-crown-blue-deep" aria-hidden="true" />
+              <h2 className="text-lead font-bold text-ink">The yearbooks are open to you</h2>
+              <p className="text-body text-ink">Both 1977 yearbooks, page by page, with zoom for every name.</p>
+              <ButtonLink href="/yearbooks" variant="secondary">
+                Open the yearbooks
+              </ButtonLink>
+            </div>
+          ) : null}
           <div className="card flex flex-col gap-3 p-6">
             <BedDouble size={28} strokeWidth={1.75} className="text-crown-blue-deep" aria-hidden="true" />
             <h2 className="text-lead font-bold text-ink">Need a room?</h2>

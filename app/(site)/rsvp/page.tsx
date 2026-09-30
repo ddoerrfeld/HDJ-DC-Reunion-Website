@@ -9,13 +9,13 @@ import { getPublicSettings } from "@/lib/data/settings";
 import { formatLongDate } from "@/lib/format";
 import { toFormItems } from "@/lib/rsvp/form-items";
 import { serviceDb } from "@/lib/supabase/admin";
-import { turnstileSiteKey } from "@/lib/turnstile";
+import { yearbooksReady } from "@/lib/data/yearbooks";
 
 export const metadata: Metadata = { title: "RSVP" };
 
 export default async function RsvpPage() {
   const open = serviceDb() !== null;
-  const [items, availability, settings] = await Promise.all([getEventItems(), getAvailability(), getPublicSettings()]);
+  const [items, availability, settings, yearbooks] = await Promise.all([getEventItems(), getAvailability(), getPublicSettings(), yearbooksReady()]);
   const closed = isPastDeadline(settings.rsvpDeadline);
 
   return (
@@ -44,7 +44,7 @@ export default async function RsvpPage() {
               </p>
             </ComingSoonCard>
           ) : (
-            <RsvpForm mode="create" items={toFormItems(items, availability)} turnstileSiteKey={turnstileSiteKey()} />
+            <RsvpForm mode="create" items={toFormItems(items, availability)} yearbooksAvailable={yearbooks} />
           )}
         </div>
 

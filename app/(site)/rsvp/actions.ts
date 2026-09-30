@@ -3,6 +3,7 @@
 import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { getEventItems, type EventItem } from "@/lib/data/events";
+import { yearbooksReady } from "@/lib/data/yearbooks";
 import { getRsvpByToken, isPastDeadline, summaryLines, type SavedRsvp } from "@/lib/data/rsvp";
 import { getPublicSettings } from "@/lib/data/settings";
 import { sendEmail } from "@/lib/email/send";
@@ -21,7 +22,10 @@ import {
 import { hashEditToken, looksLikeToken, newEditToken, RSVP_COOKIE, RSVP_COOKIE_MAX_AGE } from "@/lib/rsvp/token";
 import { SITE_URL } from "@/lib/site";
 import { serviceDb } from "@/lib/supabase/admin";
-import { verifyTurnstile } from "@/lib/turnstile";
+import { checkClassmate, type ClassmateStatus } from "@/lib/classmates/review";
+import { grantYearbookAccess, sectionGateActive } from "@/lib/yearbook/access";
+import { sameChoice, type YearbookPhotoChoice } from "@/lib/yearbook/crop";
+import { deleteThenPhoto, renderThenPhoto } from "@/lib/yearbook/portrait";
 
 export type ActionResult =
   | { ok: false; step: "about" | "weekend" | "guests" | "review"; fieldErrors: Record<string, string>; formError?: string }
@@ -80,6 +84,50 @@ function toDbPayload(data: Submission, selections: Selection[], items: EventItem
   };
 }
 
+/**
+ * "See Me in ’77": render and store the chosen portrait crop, or clear it. Only
+ * for verified classmates (or while the yearbooks are open to everyone). A
+ * rendering failure never loses the RSVP; the attendee can pick it again.
+ */
+async function applyYearbookPhoto(
+  attendeeId: string,
+  choice: YearbookPhotoChoice | null | undefined,
+  previous: SavedRsvp["yearbookPhoto"],
+  classmate: ClassmateStatus,
+) {
+  if (choice === undefined || sameChoice(choice, previous)) return;
+  if (choice && classmate === "pending" && (await sectionGateActive())) return;
+  const db = serviceDb();
+  if (!db) return;
+  try {
+    const path = choice ? await renderThenPhoto(choice) : null;
+    // Generated types mark SQL args non-null; rsvp_set_yearbook_photo accepts nulls to clear.
+    const { data: old, error } = await db.rpc("rsvp_set_yearbook_photo", {
+      p_attendee_id: attendeeId,
+      p_page_id: (choice?.pageId ?? null) as string,
+      p_crop: choice?.crop ?? null,
+      p_then_path: path as string,
+    });
+    if (error) throw new Error(error.message);
+    if (old && old !== path) await deleteThenPhoto(old);
+  } catch (e) {
+    console.error("[rsvp] yearbook photo failed", e);
+  }
+}
+
+function classmateFields(data: Submission) {
+  const { person } = data;
+  return {
+    firstName: person.firstName,
+    hsLastName: person.hsLastName,
+    nickname: person.nickname || null,
+    currentLastName: person.nameChanged ? person.currentLastName : null,
+    email: person.email,
+    city: person.city || null,
+    gradSchool: person.gradSchool,
+  };
+}
+
 async function setRsvpCookie(token: string) {
   (await cookies()).set(RSVP_COOKIE, token, {
     httpOnly: true,
@@ -90,7 +138,7 @@ async function setRsvpCookie(token: string) {
   });
 }
 
-async function sendConfirmation(saved: SavedRsvp, token: string, items: EventItem[], updated: boolean) {
+async function sendConfirmation(saved: SavedRsvp, token: string, items: EventItem[], updated: boolean, classmate: ClassmateStatus) {
   const lines = summaryLines(saved.registrations, items);
   const { organizerContactEmail } = await getPublicSettings();
   const email = confirmationEmail({
@@ -98,6 +146,8 @@ async function sendConfirmation(saved: SavedRsvp, token: string, items: EventIte
     editUrl: `${SITE_URL}/rsvp/edit/${token}`,
     lines,
     updated,
+    pendingReview: classmate === "pending",
+    inviteSeeMe: classmate !== "pending" && !saved.yearbookPhoto && (await yearbooksReady()),
   });
   const timed = items.filter((i) => i.startsAt && saved.registrations.some((r) => r.slug === i.slug && r.status !== "waitlist"));
   await sendEmail({
@@ -130,10 +180,9 @@ export async function submitRsvp(input: unknown): Promise<ActionResult> {
   const invalid = validateSelections(data.selections, items);
   if (invalid) return invalid;
 
+  // Honeypot: a field people never see. Bots that fill every input are turned away quietly.
+  if (data.website) return fail("review", {}, GENERIC_ERROR);
   const ip = clientKey(await headers());
-  if (!(await verifyTurnstile(data.turnstileToken, ip))) {
-    return fail("review", {}, "We couldn’t confirm you’re not a robot. Please try the check again.");
-  }
   if (!(await rateLimit(`rsvp:${ip}`, 10, 60 * 60))) {
     return fail("review", {}, "Too many RSVPs from this connection. Please wait an hour and try again.");
   }
@@ -159,18 +208,27 @@ export async function submitRsvp(input: unknown): Promise<ActionResult> {
     redirect("/rsvp/check-email?reason=duplicate");
   }
 
+  // Classmate check (replaces a bot check): matched names are confirmed and get the
+  // yearbooks now; anyone else is saved and held for the organizer's one-click approval.
+  const classmate = await checkClassmate(outcome.attendeeId, classmateFields(data), null);
+  if (classmate !== "pending") await grantYearbookAccess();
+  await applyYearbookPhoto(outcome.attendeeId, data.yearbookPhoto, null, classmate);
+
   const saved = await getRsvpByToken(token);
   let emailFailed = false;
   if (saved) {
     try {
-      await sendConfirmation(saved, token, items, false);
+      await sendConfirmation(saved, token, items, false, classmate);
     } catch (e) {
       emailFailed = true;
       console.error("[rsvp] confirmation email failed", e);
     }
   }
   await setRsvpCookie(token);
-  redirect(emailFailed ? "/rsvp/confirmed?email=failed" : "/rsvp/confirmed");
+  const query = new URLSearchParams();
+  if (emailFailed) query.set("email", "failed");
+  if (classmate === "pending") query.set("review", "1");
+  redirect(`/rsvp/confirmed${query.size ? `?${query}` : ""}`);
 }
 
 /** SPEC §7.3 — edit via private link. Paid-event changes close at the RSVP deadline. */
@@ -220,18 +278,22 @@ export async function updateRsvp(token: string, input: unknown): Promise<ActionR
   const previousPhoto = (result as { previousPhotoPath: string | null }).previousPhotoPath;
   if (previousPhoto && previousPhoto !== data.photoPath) await deletePhoto(previousPhoto);
 
+  const classmate = await checkClassmate(existing.attendeeId, classmateFields(data), existing.classmateStatus);
+  if (classmate !== "pending") await grantYearbookAccess();
+  await applyYearbookPhoto(existing.attendeeId, data.yearbookPhoto, existing.yearbookPhoto, classmate);
+
   const saved = await getRsvpByToken(token);
   let emailFailed = false;
   if (saved) {
     try {
-      await sendConfirmation(saved, token, items, true);
+      await sendConfirmation(saved, token, items, true, classmate);
     } catch (e) {
       emailFailed = true;
       console.error("[rsvp] update email failed", e);
     }
   }
   await setRsvpCookie(token);
-  redirect(`/rsvp/confirmed?updated=1${emailFailed ? "&email=failed" : ""}`);
+  redirect(`/rsvp/confirmed?updated=1${emailFailed ? "&email=failed" : ""}${classmate === "pending" ? "&review=1" : ""}`);
 }
 
 /** SPEC §12.2 — "Delete my RSVP": personal data and photo removed; payment records kept anonymized. */
@@ -243,8 +305,9 @@ export async function deleteRsvp(token: string): Promise<void> {
     console.error("[rsvp] delete failed", error);
     redirect(`/rsvp/edit/${token}?error=delete`);
   }
-  const removed = data as { photoPath: string | null };
+  const removed = data as { photoPath: string | null; thenPhotoPath: string | null };
   await deletePhoto(removed.photoPath);
+  await deleteThenPhoto(removed.thenPhotoPath);
   (await cookies()).delete(RSVP_COOKIE);
   redirect("/rsvp/deleted");
 }

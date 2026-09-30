@@ -8,6 +8,7 @@ import { ChoiceCard, TextField } from "@/components/ui/Field";
 import type { FormItem, FormState, SelectionState } from "@/lib/rsvp/form-model";
 import { emptySelection } from "@/lib/rsvp/form-model";
 import type { GradSchool } from "@/lib/rsvp/schema";
+import { ThenPreview } from "./SeeMePicker";
 
 type Errors = Record<string, string>;
 
@@ -425,10 +426,23 @@ export function ReviewStep({
         </dl>
       </ReviewSection>
 
-      <ReviewSection title="Photo" onEdit={() => onEdit(1)}>
-        {state.photo ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={state.photo.url} alt="Your photo" width={96} height={96} className="size-24 rounded-sm object-cover ring-1 ring-line" />
+      <ReviewSection title="Photos" onEdit={() => onEdit(1)}>
+        {state.photo || state.yearbookPhoto ? (
+          <div className="flex flex-wrap items-end gap-5">
+            {state.photo ? (
+              <figure className="flex flex-col gap-1">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={state.photo.url} alt="Your photo" width={96} height={96} className="size-24 rounded-sm object-cover ring-1 ring-line" />
+                <figcaption className="text-small text-muted">Now</figcaption>
+              </figure>
+            ) : null}
+            {state.yearbookPhoto ? (
+              <figure className="flex flex-col gap-1">
+                <ThenPreview value={state.yearbookPhoto} size={96} />
+                <figcaption className="text-small text-muted">1977</figcaption>
+              </figure>
+            ) : null}
+          </div>
         ) : (
           <p className="text-muted">No photo — that’s fine.</p>
         )}

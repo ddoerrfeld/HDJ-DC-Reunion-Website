@@ -11,8 +11,8 @@ import { ErrorSummary } from "./ErrorSummary";
 import { PhotoPicker } from "./PhotoPicker";
 import { PaymentComingSoon } from "./PaymentComingSoon";
 import { ProgressSteps } from "./ProgressSteps";
+import { SeeMePicker } from "./SeeMePicker";
 import { AboutStep, GuestsStep, ReviewStep, WeekendStep } from "./steps";
-import { Turnstile } from "./Turnstile";
 
 
 const STEPS = ["About you", "Photo", "Your weekend", "Guests", "Review"] as const;
@@ -29,8 +29,9 @@ export interface RsvpFormProps {
   items: FormItem[];
   initial?: FormState;
   token?: string;
-  turnstileSiteKey: string | null;
   lockedPaid?: boolean;
+  /** Show "Find yourself in the ’77 yearbook" (the yearbooks are set up). */
+  yearbooksAvailable?: boolean;
 }
 
 function blankState(): FormState {
@@ -54,14 +55,14 @@ function loadDraftStep(): number {
   }
 }
 
-export default function RsvpFormInner({ mode, items, initial, token, turnstileSiteKey, lockedPaid = false }: RsvpFormProps) {
+export default function RsvpFormInner({ mode, items, initial, token, lockedPaid = false, yearbooksAvailable = false }: RsvpFormProps) {
   // Client-only component (loaded with ssr:false), so sessionStorage is safe in initializers.
   const [state, setState] = useState<FormState>(() => (mode === "create" ? loadDraft() : null) ?? initial ?? blankState());
   const [step, setStep] = useState(() => (mode === "create" ? loadDraftStep() : 0));
   const [furthest, setFurthest] = useState(step);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [formError, setFormError] = useState<string | undefined>();
-  const [turnstileToken, setTurnstileToken] = useState("");
+  const [website, setWebsite] = useState("");
   const [pending, startTransition] = useTransition();
   const heading = useRef<HTMLHeadingElement>(null);
   const summary = useRef<HTMLDivElement>(null);
@@ -128,9 +129,10 @@ export default function RsvpFormInner({ mode, items, initial, token, turnstileSi
     const payload = {
       person: state.person,
       photoPath: state.photo?.path ?? null,
+      yearbookPhoto: state.yearbookPhoto ? { pageId: state.yearbookPhoto.pageId, crop: state.yearbookPhoto.crop } : null,
       selections: selectedList(state),
       showInDirectory: state.showInDirectory,
-      turnstileToken: turnstileToken || undefined,
+      website: website || undefined,
     };
     startTransition(async () => {
       const result: ActionResult | undefined =
@@ -169,7 +171,16 @@ export default function RsvpFormInner({ mode, items, initial, token, turnstileSi
           />
         ) : null}
         {step === 1 ? (
-          <PhotoPicker value={state.photo} school={school} onChange={(photo) => setState((s) => ({ ...s, photo }))} />
+          <div className="flex flex-col gap-8">
+            <PhotoPicker value={state.photo} school={school} onChange={(photo) => setState((s) => ({ ...s, photo }))} />
+            {yearbooksAvailable ? (
+              <SeeMePicker
+                value={state.yearbookPhoto ?? null}
+                onChange={(yearbookPhoto) => setState((s) => ({ ...s, yearbookPhoto }))}
+                person={state.person}
+              />
+            ) : null}
+          </div>
         ) : null}
         {step === 2 ? (
           <WeekendStep
@@ -197,7 +208,15 @@ export default function RsvpFormInner({ mode, items, initial, token, turnstileSi
               onEdit={goTo}
               onShowInDirectory={(showInDirectory) => setState((s) => ({ ...s, showInDirectory }))}
             />
-            {mode === "create" ? <Turnstile siteKey={turnstileSiteKey} onToken={setTurnstileToken} /> : null}
+            {mode === "create" ? (
+              // Honeypot for bots (replaces a visible bot check): off-screen, skipped by keyboard and screen readers.
+              <div aria-hidden="true" className="absolute -left-[10000px] h-px w-px overflow-hidden">
+                <label>
+                  Website
+                  <input tabIndex={-1} autoComplete="off" value={website} onChange={(e) => setWebsite(e.target.value)} />
+                </label>
+              </div>
+            ) : null}
             <PaymentComingSoon titles={paidTitles} />
           </>
         ) : null}
@@ -213,7 +232,7 @@ export default function RsvpFormInner({ mode, items, initial, token, turnstileSi
         )}
         {step < STEPS.length - 1 ? (
           <Button onClick={next} icon={<ArrowRight size={20} strokeWidth={1.75} aria-hidden="true" />}>
-            {step === 1 && !state.photo ? "Skip for now" : "Next"}
+            {step === 1 && !state.photo && !state.yearbookPhoto ? "Skip for now" : "Next"}
           </Button>
         ) : (
           <Button onClick={submit} disabled={pending} aria-disabled={pending}>

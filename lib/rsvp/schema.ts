@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { YearbookPhotoSchema } from "@/lib/yearbook/crop";
 
 /**
  * RSVP validation shared by the browser form and the server (SPEC §7.2).
@@ -55,7 +56,10 @@ export const SubmissionSchema = z.object({
   photoPath: PhotoPathSchema,
   selections: z.array(SelectionSchema).max(20),
   showInDirectory: z.boolean(),
-  turnstileToken: z.string().max(4096).optional(),
+  /** "See Me in ’77": page + crop around their senior portrait (null clears it). */
+  yearbookPhoto: YearbookPhotoSchema.nullable().optional(),
+  /** Honeypot: hidden from people; anything typed here means a bot. */
+  website: z.string().max(200).optional(),
 });
 export type Submission = z.infer<typeof SubmissionSchema>;
 

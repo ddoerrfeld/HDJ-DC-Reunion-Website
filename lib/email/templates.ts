@@ -95,13 +95,20 @@ function paymentNote(lines: EmailLine[]): { html: string; text: string } {
   };
 }
 
+export const REVIEW_NOTE =
+  "One more thing: we couldn’t automatically match your name to the 1977 senior portraits, so the organizer will confirm you by hand — usually within a day. Your RSVP is saved either way. Until then you won’t appear on Who’s Coming.";
+
 export function confirmationEmail(opts: {
   firstName: string;
   editUrl: string;
   lines: EmailLine[];
   updated?: boolean;
+  /** Name not found among the 1977 senior portraits: the organizer confirms by hand. */
+  pendingReview?: boolean;
+  /** No yearbook portrait picked yet: invite them back to "See Me in ’77" (SPEC §10.4). */
+  inviteSeeMe?: boolean;
 }): { subject: string; html: string; text: string } {
-  const { firstName, editUrl, lines, updated } = opts;
+  const { firstName, editUrl, lines, updated, pendingReview, inviteSeeMe } = opts;
   const subject = updated ? "Your Class of ’77 RSVP was updated" : "You’re on the list — Class of ’77 Reunion";
   const intro = updated
     ? `Hi ${firstName}, your RSVP changes are saved. Here’s where things stand:`
@@ -113,9 +120,11 @@ export function confirmationEmail(opts: {
 <p style="margin:0 0 8px 0;">${esc(intro)}</p>
 ${linesHtml(lines)}
 ${pay.html}
+${pendingReview ? `<p style="margin:0 0 16px 0;padding:16px;background:#E8EEF8;border-left:4px solid ${BLUE_DEEP};">${esc(REVIEW_NOTE)}</p>` : ""}
 <p style="margin:0;">Change your plans, add guests, or update your photo any time:</p>
 ${button(editUrl, "View or change my RSVP")}
 <p style="margin:0 0 16px 0;font-size:16px;color:${MUTED};">This link is private — anyone who has it can change your RSVP, so please don’t forward this email. A calendar file for your events is attached.</p>
+${inviteSeeMe ? `<p style="margin:0 0 16px 0;"><strong>Find yourself in the ’77 yearbook.</strong> Open your link above, go to the Photo step, and pick out your senior portrait — classmates will see it next to your photo today.</p>` : ""}
 <p style="margin:0;">Need a room? <a href="${SITE_URL}/stay" style="color:${BLUE_DEEP};">See where to stay</a>.</p>`,
   );
   const text = `${updated ? "RSVP UPDATED" : "YOU’RE ON THE LIST!"}
@@ -123,10 +132,10 @@ ${button(editUrl, "View or change my RSVP")}
 ${intro}
 
 ${linesText(lines)}
-${pay.text ? `\n${pay.text}\n` : ""}
+${pay.text ? `\n${pay.text}\n` : ""}${pendingReview ? `\n${REVIEW_NOTE}\n` : ""}
 View or change your RSVP (private link — please don’t forward):
 ${editUrl}
-
+${inviteSeeMe ? "\nFind yourself in the ’77 yearbook: open your link, go to the Photo step, and pick out your senior portrait.\n" : ""}
 Need a room? ${SITE_URL}/stay
 
 Questions? Just reply to this email.
@@ -156,5 +165,65 @@ View or change your RSVP:
 ${opts.editUrl}
 
 This new link replaces any earlier one. It’s private — please don’t forward this email. If you didn’t ask for it, you can ignore it; your RSVP is unchanged.`;
+  return { subject, html, text };
+}
+
+/** To the organizer: an RSVP whose name isn't in the senior roster. */
+export function classmateReviewEmail(opts: {
+  name: string;
+  hsLastName: string;
+  school: string;
+  email: string;
+  city: string | null;
+  approveUrl: string;
+}) {
+  const subject = `Please confirm a classmate: ${opts.name}`;
+  const details = [
+    ["Name", opts.name],
+    ["Last name in high school", opts.hsLastName],
+    ["Graduated from", opts.school],
+    ["Email", opts.email],
+    ...(opts.city ? [["City", opts.city]] : []),
+  ];
+  const html = layout(
+    subject,
+    `<h1 style="margin:0 0 16px 0;font-family:Georgia,serif;font-size:28px;line-height:1.25;color:${INK};">A new RSVP needs a quick check</h1>
+<p style="margin:0 0 16px 0;">This name wasn’t found among the 1977 senior portraits. That usually means a nickname, a transfer, or someone who wasn’t photographed — but please confirm they’re a classmate.</p>
+<table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 0 8px 0;">${details
+      .map(([k, v]) => `<tr><td style="padding:4px 16px 4px 0;color:${MUTED};">${esc(k)}</td><td style="padding:4px 0;"><strong>${esc(v)}</strong></td></tr>`)
+      .join("")}</table>
+${button(opts.approveUrl, "Review and approve")}
+<p style="margin:0;font-size:16px;color:${MUTED};">If they aren’t a classmate, do nothing: their RSVP stays saved, but they won’t appear on Who’s Coming or be able to open the yearbooks.</p>`,
+  );
+  const text = `A NEW RSVP NEEDS A QUICK CHECK
+
+This name wasn’t found among the 1977 senior portraits. Please confirm they’re a classmate.
+
+${details.map(([k, v]) => `${k}: ${v}`).join("\n")}
+
+Review and approve:
+${opts.approveUrl}
+
+If they aren’t a classmate, do nothing: they won’t appear on Who’s Coming or be able to open the yearbooks.`;
+  return { subject, html, text };
+}
+
+/** To the attendee once the organizer approves them. */
+export function classmateApprovedEmail(opts: { firstName: string }) {
+  const subject = "You’re confirmed — Class of ’77 Reunion";
+  const url = `${SITE_URL}/yearbooks`;
+  const html = layout(
+    subject,
+    `<h1 style="margin:0 0 16px 0;font-family:Georgia,serif;font-size:28px;line-height:1.25;color:${INK};">You’re confirmed!</h1>
+<p style="margin:0 0 16px 0;">Hi ${esc(opts.firstName)}, the organizer has confirmed your RSVP. You now appear on Who’s Coming, and the 1977 yearbooks are open to you.</p>
+${button(url, "Open the yearbooks")}
+<p style="margin:0;font-size:16px;color:${MUTED};">On a different phone or computer? Open the private RSVP link from your first email once, and the yearbooks will open there too.</p>`,
+  );
+  const text = `YOU’RE CONFIRMED!
+
+Hi ${opts.firstName}, the organizer has confirmed your RSVP. You now appear on Who’s Coming, and the 1977 yearbooks are open to you:
+${url}
+
+On a different phone or computer? Open the private RSVP link from your first email once, and the yearbooks will open there too.`;
   return { subject, html, text };
 }

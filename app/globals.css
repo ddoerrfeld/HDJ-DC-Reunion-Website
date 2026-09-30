@@ -299,3 +299,16 @@
     border: 0;
   }
 }
+
+/* Yearbook reader: single-page slide (phones). The book's 3D turn lives in BookStage. */
+@keyframes yb-slide-from-right {
+  from { transform: translateX(18%); opacity: 0.2; }
+}
+@keyframes yb-slide-from-left {
+  from { transform: translateX(-18%); opacity: 0.2; }
+}
+.yb-slide-from-right { animation: yb-slide-from-right 260ms var(--ease-out); }
+.yb-slide-from-left { animation: yb-slide-from-left 260ms var(--ease-out); }
+@media (prefers-reduced-motion: reduce) {
+  .yb-slide-from-right, .yb-slide-from-left { animation: none; }
+}

@@ -1,3 +1,4 @@
+import type { YearbookCrop } from "@/lib/yearbook/crop";
 import type { Person, Selection } from "./schema";
 
 /**
@@ -33,9 +34,20 @@ export interface PhotoState {
   url: string;
 }
 
+/** "See Me in ’77" choice: previewed by cropping the page image in CSS until saved. */
+export interface ThenPhotoState {
+  pageId: string;
+  crop: YearbookCrop;
+  label: string;
+  preview: { src: string; width: number; height: number } | null;
+  renderedUrl: string | null;
+}
+
 export interface FormState {
   person: Omit<Person, "gradSchool"> & { gradSchool: Person["gradSchool"] | "" };
   photo: PhotoState | null;
+  /** Optional; missing in drafts saved before this feature. */
+  yearbookPhoto?: ThenPhotoState | null;
   selections: Record<string, SelectionState>;
   showInDirectory: boolean;
 }

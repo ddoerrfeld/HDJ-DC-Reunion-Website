@@ -5,6 +5,8 @@ import { photoUrl } from "@/lib/photos";
 import type { Person, Selection } from "@/lib/rsvp/schema";
 import { hashEditToken, looksLikeToken } from "@/lib/rsvp/token";
 import { serviceDb } from "@/lib/supabase/admin";
+import { YearbookCropSchema, type YearbookPhotoChoice } from "@/lib/yearbook/crop";
+import { thenPhotoUrl } from "@/lib/yearbook/portrait";
 import { publicDb } from "@/lib/supabase/server";
 
 export type RegistrationStatus = "confirmed" | "pending_payment" | "pending_offline" | "waitlist" | "cancelled";
@@ -19,6 +21,9 @@ export interface SavedRsvp {
   photoPath: string | null;
   photoUrl: string | null;
   showInDirectory: boolean;
+  classmateStatus: "matched" | "pending" | "approved";
+  /** "See Me in ’77" choice and its rendered image, if any. */
+  yearbookPhoto: (YearbookPhotoChoice & { path: string | null; url: string | null }) | null;
   registrations: SavedRegistration[];
 }
 
@@ -30,7 +35,7 @@ export async function getRsvpByToken(token: string | undefined | null): Promise<
   const { data, error } = await db
     .from("attendees")
     .select(
-      "id, first_name, hs_last_name, current_last_name, nickname, email, phone, city, state, grad_school, photo_path, show_in_directory, registrations(status, guest_count, halftime_walk, event_items(slug), guests(first_name, last_name))",
+      "id, first_name, hs_last_name, current_last_name, nickname, email, phone, city, state, grad_school, photo_path, show_in_directory, classmate_status, yearbook_page_id, yearbook_crop, then_photo_path, registrations(status, guest_count, halftime_walk, event_items(slug), guests(first_name, last_name))",
     )
     .eq("edit_token_hash", hashEditToken(token))
     .eq("status", "active")
@@ -55,6 +60,13 @@ export async function getRsvpByToken(token: string | undefined | null): Promise<
     photoPath: data.photo_path,
     photoUrl: photoUrl(data.photo_path),
     showInDirectory: data.show_in_directory,
+    classmateStatus: data.classmate_status,
+    yearbookPhoto: (() => {
+      const crop = YearbookCropSchema.safeParse(data.yearbook_crop);
+      return data.yearbook_page_id && crop.success
+        ? { pageId: data.yearbook_page_id, crop: crop.data, path: data.then_photo_path, url: thenPhotoUrl(data.then_photo_path) }
+        : null;
+    })(),
     registrations: data.registrations
       .filter((r) => r.status !== "cancelled" && r.event_items)
       .map((r) => ({

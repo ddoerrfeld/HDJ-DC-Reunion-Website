@@ -8,6 +8,7 @@ import { getEventItems } from "@/lib/data/events";
 import { getAvailability, getRsvpByToken, isPastDeadline } from "@/lib/data/rsvp";
 import { getPublicSettings } from "@/lib/data/settings";
 import { toFormItems } from "@/lib/rsvp/form-items";
+import { yearbooksReady } from "@/lib/data/yearbooks";
 import type { FormState } from "@/lib/rsvp/form-model";
 import { emptySelection } from "@/lib/rsvp/form-model";
 
@@ -52,6 +53,9 @@ export default async function EditRsvpPage({
   const initial: FormState = {
     person: saved.person,
     photo: saved.photoPath && saved.photoUrl ? { path: saved.photoPath, url: saved.photoUrl } : null,
+    yearbookPhoto: saved.yearbookPhoto
+      ? { pageId: saved.yearbookPhoto.pageId, crop: saved.yearbookPhoto.crop, label: "", preview: null, renderedUrl: saved.yearbookPhoto.url }
+      : null,
     selections,
     showInDirectory: saved.showInDirectory,
   };
@@ -73,8 +77,8 @@ export default async function EditRsvpPage({
             token={token}
             items={toFormItems(items, availability)}
             initial={initial}
-            turnstileSiteKey={null}
             lockedPaid={isPastDeadline(settings.rsvpDeadline)}
+            yearbooksAvailable={await yearbooksReady()}
           />
         </div>
         <DeleteRsvp token={token} />
