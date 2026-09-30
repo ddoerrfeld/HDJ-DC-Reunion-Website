@@ -1,0 +1,205 @@
+/* ==========================================================================
+   Home hero — "The Split" (SPEC §4.1)
+
+   The default styles ARE the final state. The animation only runs when an
+   inline <head> script sets html[data-hero="play"] (first home view of the
+   session, no reduced-motion preference). No JS → final state. Skip → the
+   attribute flips to "static" and everything lands on the final state.
+
+   Geometry: .hero is a size container, so the 62° seam is exact at any aspect
+   ratio. Horizontal seam offset at the top/bottom edge = 50cqh / tan(62°).
+   ========================================================================== */
+
+.hero {
+  --hero-dur: 3.4s;
+  --seam-dx: calc(50cqh * 0.53171);
+  position: relative;
+  container-type: size;
+  height: clamp(600px, calc(100svh - var(--header-h) - 36px), 820px);
+  overflow: hidden;
+  isolation: isolate;
+  background: var(--ink);
+  color: var(--crown-white);
+}
+
+.hero-half {
+  position: absolute;
+  inset: 0;
+}
+.hero-left {
+  background-color: var(--crown-blue);
+  clip-path: polygon(0 0, calc(50% + var(--seam-dx) + 1px) 0, calc(50% - var(--seam-dx) + 1px) 100%, 0 100%);
+}
+.hero-right {
+  background-color: var(--jacobs-brown);
+  clip-path: polygon(calc(50% + var(--seam-dx)) 0, 100% 0, 100% 100%, calc(50% - var(--seam-dx)) 100%);
+}
+/* Covers the right half in Crown blue at the start, then fades: the "recolor". */
+.hero-right-cover {
+  position: absolute;
+  inset: 0;
+  background-color: var(--crown-blue);
+  opacity: 0;
+}
+
+.hero-label {
+  position: absolute;
+  max-width: min(60cqw, 440px);
+  text-shadow: var(--seam-halo);
+}
+.hero-label-crown {
+  top: 28px;
+  left: 16px;
+}
+.hero-label-jacobs {
+  right: 16px;
+  bottom: 28px;
+  text-align: right;
+  color: var(--jacobs-gold); /* 6.79:1 on brown */
+}
+@media (min-width: 768px) {
+  .hero-label-crown {
+    top: 40px;
+    left: 40px;
+  }
+  .hero-label-jacobs {
+    right: 40px;
+    bottom: 40px;
+  }
+}
+
+.hero-seam {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 4px;
+  height: calc(100cqh / 0.88295 + 8px); /* ÷ sin 62° */
+  transform: translate(-50%, -50%) rotate(var(--seam-lean));
+  pointer-events: none;
+}
+.hero-seam-line,
+.hero-seam-stitch {
+  position: absolute;
+  inset: 0;
+  transform-origin: top center;
+}
+.hero-seam-line {
+  background: var(--seam-gold);
+}
+.hero-seam-stitch {
+  background: repeating-linear-gradient(to bottom, var(--seam-gold) 0 14px, transparent 14px 24px);
+  opacity: 0;
+}
+
+.hero-content {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  height: 100%;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 120px 16px;
+  text-align: center;
+  /* Tight dark halo: keeps white text ≥ 4.5:1 where glyphs cross the gold seam. */
+  text-shadow: var(--seam-halo);
+}
+
+.hero-skip {
+  display: none;
+}
+
+/* ---------- Timeline (only while playing) ---------- */
+html[data-hero="play"] .hero :is(.hero-left, .hero-right, .hero-right-cover, .hero-label, .hero-seam-line, .hero-seam-stitch, .hero-content) {
+  animation-duration: var(--hero-dur);
+  animation-timing-function: cubic-bezier(0.65, 0, 0.35, 1);
+  animation-fill-mode: both;
+}
+html[data-hero="play"] .hero-left {
+  animation-name: hero-left;
+}
+html[data-hero="play"] .hero-right {
+  animation-name: hero-right;
+}
+html[data-hero="play"] .hero-right-cover {
+  animation-name: hero-recolor;
+}
+html[data-hero="play"] .hero-label-crown {
+  animation-name: hero-label-crown;
+}
+html[data-hero="play"] .hero-label-jacobs {
+  animation-name: hero-label-jacobs;
+}
+html[data-hero="play"] .hero-seam-line {
+  animation-name: hero-seam-line;
+}
+html[data-hero="play"] .hero-seam-stitch {
+  animation-name: hero-seam-stitch;
+}
+html[data-hero="play"] .hero-content {
+  animation-name: hero-content;
+}
+html[data-hero="play"] .hero-skip {
+  display: inline-flex;
+  /* Hides itself at the end even if JavaScript is slow to arrive. */
+  animation: hero-skip var(--hero-dur) linear both;
+}
+@keyframes hero-skip {
+  0%, 99% { visibility: visible; }
+  100% { visibility: hidden; }
+}
+
+/* 0.6 s = 17.6 %, 1.2 s = 35.3 %, 1.7 s = 50 %, 2.2 s = 64.7 %,
+   2.3 s = 67.6 %, 2.6 s = 76.5 %, 2.8 s = 82.4 %, 3.0 s = 88.2 % */
+@keyframes hero-left {
+  0%, 50% { transform: none; }
+  64.7%, 67.6% { transform: translateX(-20px); }
+  82.4%, 100% { transform: none; }
+}
+@keyframes hero-right {
+  0%, 50% { transform: none; }
+  64.7%, 67.6% { transform: translateX(20px); }
+  82.4%, 100% { transform: none; }
+}
+/* Brown wipes outward from the seam rather than cross-fading (a fade passes through grey). */
+@keyframes hero-recolor {
+  /* The wipe edge is itself a 62° line travelling away from the seam. */
+  0%, 35.3% { opacity: 1; clip-path: polygon(calc(50% + var(--seam-dx)) 0, 200% 0, 200% 100%, calc(50% - var(--seam-dx)) 100%); }
+  50% { opacity: 1; clip-path: polygon(calc(100% + 2 * var(--seam-dx)) 0, 200% 0, 200% 100%, 100% 100%); }
+  100% { opacity: 0; clip-path: polygon(calc(100% + 2 * var(--seam-dx)) 0, 200% 0, 200% 100%, 100% 100%); }
+}
+@keyframes hero-label-crown {
+  0% { opacity: 0; transform: translateY(8px); }
+  9%, 100% { opacity: 1; transform: none; }
+}
+@keyframes hero-label-jacobs {
+  0%, 38% { opacity: 0; transform: translateY(8px); }
+  52%, 100% { opacity: 1; transform: none; }
+}
+@keyframes hero-seam-line {
+  0%, 17.6% { transform: scaleY(0); opacity: 1; }
+  35.3%, 50% { transform: scaleY(1); opacity: 1; }
+  55.9% { transform: scaleY(1); opacity: 0; }
+  76.4% { transform: scaleY(0); opacity: 0; }
+  76.5% { transform: scaleY(0); opacity: 1; }
+  88.2%, 100% { transform: scaleY(1); opacity: 1; }
+}
+@keyframes hero-seam-stitch {
+  0%, 50% { opacity: 0; }
+  55.9%, 88.2% { opacity: 1; }
+  100% { opacity: 0; }
+}
+@keyframes hero-content {
+  /* Invisible buttons must not be clickable; pointer-events flips back near the end. */
+  0%, 82.4% { opacity: 0; transform: translateY(12px); pointer-events: none; }
+  100% { opacity: 1; transform: none; pointer-events: auto; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html[data-hero] .hero * {
+    animation: none !important;
+  }
+  html[data-hero] .hero-skip {
+    display: none !important;
+  }
+}

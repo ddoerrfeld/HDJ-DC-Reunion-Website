@@ -1,5 +1,7 @@
 # CLAUDE.md — Class of ’77 50-Year Reunion Website
 
+@AGENTS.md
+
 **Read `SPEC.md` in full before doing anything.** It is the authoritative spec. This file only summarizes it; if the two disagree, `SPEC.md` wins (unless a deviation below was approved by the owner).
 
 ## Working rules (from SPEC §0 and the owner)
@@ -44,7 +46,7 @@ Fonts (via `next/font`): **Graduate** (display, uppercase, +2% tracking, never b
 
 | Phase | Status |
 |---|---|
-| 1 — Foundation & Design System | Plan submitted, awaiting owner approval |
+| 1 — Foundation & Design System | Built — awaiting owner approval of `/styleguide` and screenshots |
 | 2 — Data Layer & Weekend Page | Not started |
 | 3 — RSVP (no payment) | Not started |
 | 4 — Payments | Not started |
@@ -55,4 +57,25 @@ Fonts (via `next/font`): **Graduate** (display, uppercase, +2% tracking, never b
 
 ## Approved deviations from SPEC
 
-_None yet._
+The owner deferred to engineering judgment on every issue flagged in the Phase 1 plan (“do not build to spec if you find a better way”). In effect:
+
+- **Focus ring:** 3 px `--seam-gold` outline over a 2 px `--ink` ring (gold alone fails 3:1 on paper).
+- **Hero headline in Bitter 700**, not Graduate (nine-word all-caps sentences read slowly). Graduate stays for “77”, school names, and short labels.
+- **Countdown is days only** (no ticking seconds).
+- **Passcode field is visible text**, compared case- and whitespace-insensitively.
+- **Gate cookie key = SITE_GATE_SECRET + passcode**, so changing the passcode signs out all devices; needs the extra `SITE_GATE_SECRET` env var.
+- **Typographic quotes everywhere** (’77), even where SPEC shows '77.
+- **Hero adds a visible “Skip intro” button** plus any-key skip, for keyboard and screen-reader users.
+- **Monogram is a side-by-side ligature** (shared seam, parallel 62° stems) rather than overlapping/woven 7s — reads as one class split by the seam. Pending owner review on `/styleguide`.
+- **Light text that can cross the gold seam gets a tight dark halo** (`--seam-halo`); white on gold is only 2.17:1.
+- **Small text floored at 16 px** (scale step would be 14.4 px).
+- **Placeholder stub pages** for nav routes not yet built (no 404s from the nav).
+- **Later-phase decisions already made:** HEIC decoded server-side before the crop step (Phase 3); generic “we’ve emailed your link” response on duplicate RSVP (Phase 3); recommend dropping the card-surcharge option (Phase 4); custom CSS 3D page flip instead of unmaintained `react-pageflip` (Phase 5); flag R2 vs Supabase egress (Phase 5); Postgres-backed rate limiting (Phase 8).
+
+## Implementation notes
+
+- Next.js 16: middleware is `proxy.ts`. Read `node_modules/next/dist/docs/` before using unfamiliar APIs.
+- Event facts: `lib/content/event-seed.ts` (SPEC §6 only) behind `lib/data/events.ts` — Phase 2 swaps the data source to Supabase without touching callers.
+- Hero: CSS-only timeline in `components/home/hero.css`; `heroBootScript` sets `html[data-hero]` before paint. Default styles are the final state.
+- Tailwind v4 theme is locked to brand tokens (`--color-*: initial`, `--text-*: initial`): no off-palette colors or off-scale sizes.
+- Playwright is pinned to 1.56.1 to match the preinstalled Chromium (with an `overrides` entry for `playwright-core`).
