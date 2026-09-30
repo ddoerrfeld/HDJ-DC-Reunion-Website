@@ -2,7 +2,7 @@
    Home hero — "The Split" (SPEC §4.1)
 
    The default styles ARE the final state. The animation only runs when an
-   inline <head> script sets html[data-hero="play"] (first home view of the
+   inline boot script (first child of <body>) sets html[data-hero="play"] (first home view of the
    session, no reduced-motion preference). No JS → final state. Skip → the
    attribute flips to "static" and everything lands on the final state.
 

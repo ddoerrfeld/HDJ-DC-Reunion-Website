@@ -1,4 +1,8 @@
+import { loadEnvConfig } from "@next/env";
 import { defineConfig, devices } from "@playwright/test";
+
+// Tests read SUPABASE_URL etc. directly; load .env.local like `next` does (CI sets them explicitly).
+loadEnvConfig(process.cwd());
 
 const PORT = Number(process.env.PORT ?? 3100);
 

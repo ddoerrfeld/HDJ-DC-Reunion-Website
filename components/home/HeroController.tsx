@@ -7,10 +7,13 @@ const HERO_DURATION_MS = 3400;
 const SKIP_EVENTS = ["pointerdown", "wheel", "touchmove", "keydown", "scroll"] as const;
 
 /**
- * Runs before first paint (inlined in <head>): decides whether the hero plays.
- * Plays once per browser session and never under prefers-reduced-motion.
+ * Runs before first paint (first child of <body>): decides whether the hero plays.
+ * Plays once per browser session and never under prefers-reduced-motion. The
+ * "played" flag is written here on a home-page load, not after hydration, so a
+ * reload before React loads (slow phone) doesn't replay the intro. The controller
+ * also writes it, for a client-side navigation to the home page.
  */
-export const heroBootScript = `(function(){var d=document.documentElement;try{var r=window.matchMedia("(prefers-reduced-motion: reduce)").matches;d.dataset.hero=(r||sessionStorage.getItem("${HERO_PLAYED_KEY}"))?"static":"play";}catch(e){d.dataset.hero="static";}})();`;
+export const heroBootScript = `(function(){var d=document.documentElement;try{var r=window.matchMedia("(prefers-reduced-motion: reduce)").matches;var s=r||sessionStorage.getItem("${HERO_PLAYED_KEY}");d.dataset.hero=s?"static":"play";if(!s&&location.pathname==="/")sessionStorage.setItem("${HERO_PLAYED_KEY}","1");}catch(e){d.dataset.hero="static";}})();`;
 
 /** Marks the intro as played, and lets click / scroll / any key / the Skip button end it early. */
 export function HeroController() {
