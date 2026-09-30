@@ -35,3 +35,12 @@ export function setLodging(rows: Array<keyof typeof LODGING_FIXTURES>) {
   sql(`insert into public.lodging (name, address, phone, is_official_block, group_code, booking_url, rate_text,
     cutoff_date, drive_times_md, notes_md, visible, sort) values ${rows.map((r) => LODGING_FIXTURES[r]).join(", ")}`);
 }
+
+/** Remove storage objects through the Storage API (direct SQL deletes are blocked by Supabase). */
+export async function removeStorage(bucket: string, paths: string[]) {
+  const { createClient } = await import("@supabase/supabase-js");
+  const db = createClient(process.env.SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!, {
+    auth: { persistSession: false },
+  });
+  await db.storage.from(bucket).remove(paths);
+}

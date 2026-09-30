@@ -4,6 +4,8 @@ const preview = process.env.SITE_STAGE !== "production";
 
 const nextConfig: NextConfig = {
   poweredByHeader: false,
+  // WASM/native image libraries must load from node_modules, not the bundle.
+  serverExternalPackages: ["heic-convert", "libheif-js", "sharp"],
   async headers() {
     const always = [
       { key: "X-Content-Type-Options", value: "nosniff" },

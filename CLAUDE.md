@@ -47,8 +47,8 @@ Fonts (via `next/font`): **Graduate** (display, uppercase, +2% tracking, never b
 | Phase | Status |
 |---|---|
 | 1 — Foundation & Design System | ✅ Approved by owner |
-| 2 — Data Layer & Weekend Page | Built — awaiting owner approval (production Supabase not yet connected) |
-| 3 — RSVP (no payment) | Not started |
+| 2 — Data Layer & Weekend Page | ✅ Approved by owner |
+| 3 — RSVP (no payment) | Built — awaiting owner approval (production Supabase, Resend, Turnstile keys not yet connected) |
 | 4 — Payments | Not started |
 | 5 — Yearbooks (request assets first) | Not started |
 | 6 — Directory | Not started |
@@ -74,7 +74,14 @@ The owner deferred to engineering judgment on every issue flagged in the Phase 1
 - **Pages refresh every 60 s** (ISR) plus `/api/revalidate` for instant refresh; public reads use the anon key under RLS, never the service role.
 - **Seed fallback**: with no Supabase env in *preview*, pages render the SPEC §6 seed; in *production* that is a hard error.
 - **Keep-alive cron built in Phase 2** (not 8): the free-tier pause risk starts the day the project is created.
-- **Later-phase decisions already made:** HEIC decoded server-side before the crop step (Phase 3); generic “we’ve emailed your link” response on duplicate RSVP (Phase 3); recommend dropping the card-surcharge option (Phase 4); custom CSS 3D page flip instead of unmaintained `react-pageflip` (Phase 5); flag R2 vs Supabase egress (Phase 5); Postgres-backed rate limiting (Phase 8).
+- **Photo uploads go browser → Supabase Storage via signed URL** (Vercel functions cap request bodies at 4.5 MB; SPEC allows 20 MB). Server then verifies by content, decodes HEIC (`heic-convert`), orients, strips all metadata, crops. Abandoned uploads purged daily by the keep-alive cron.
+- **Duplicate RSVP tells the submitter** (“you’ve already RSVP’d — we emailed your link”) per SPEC §7.2, reversing the Phase 1 plan’s generic-response idea: the directory already reveals who’s coming, so it hides nothing. Lost-link form stays generic (SPEC §7.3). A new link is issued each time (only hashes are stored).
+- **Guest count is 0–4 radio pills**, not a +/− stepper (one tap, clearer for this audience).
+- **At least one event is required** to RSVP.
+- **After the RSVP deadline**, paid-event selections are frozen on edit; free events and personal details stay editable.
+- **Rate limits are Postgres-backed** (`rate_limit_hit`), built in Phase 3 rather than 8; `DISABLE_RATE_LIMITS=1` exists for tests only and is ignored in production.
+- **Emails without RESEND_API_KEY (preview only) go to `email_log` with their body** so tests can follow links; real sends log metadata only.
+- **Later-phase decisions already made:** recommend dropping the card-surcharge option (Phase 4); custom CSS 3D page flip instead of unmaintained `react-pageflip` (Phase 5); flag R2 vs Supabase egress (Phase 5); Postgres-backed rate limiting (Phase 8).
 
 ## Implementation notes
 
@@ -83,6 +90,7 @@ The owner deferred to engineering judgment on every issue flagged in the Phase 1
 - Data: `lib/data/*.ts` is the only data-access layer (Supabase via `lib/supabase/server.ts`). Seed facts live in `lib/content/*-seed.ts`; `supabase/seed.sql` is generated from them (CI fails if stale).
 - Local DB: `npm run db:start` (Docker). If Docker isn’t running in a cloud session: `sudo dockerd &` first. Tests mutate the local DB via `psql` (`tests/db.ts`) and restore it.
 - After changing migrations: `npm run db:reset && npm run db:types`.
-- Hero: CSS-only timeline in `components/home/hero.css`; `heroBootScript` sets `html[data-hero]` before paint. Default styles are the final state.
+- Hero: CSS-only timeline in `components/home/hero.css`; `heroBootScript` sets `html[data-hero]` before paint. Default styles are the final state. **The boot script must stay the first child of `<body>`, not in `<head>`**: in `<head>` it caused intermittent production hydration errors (#418) that reset `<html>` attributes.
+- RSVP writes go only through SECURITY DEFINER SQL functions (`rsvp_create/update/delete/rotate_token`) callable by the service role. Server code: `app/(site)/rsvp/actions.ts`, `lib/photos.ts`, `lib/email/`. Supabase functions use `search_path = ''`, so compare citext columns with `lower(x::text)`.
 - Tailwind v4 theme is locked to brand tokens (`--color-*: initial`, `--text-*: initial`): no off-palette colors or off-scale sizes.
 - Playwright is pinned to 1.56.1 to match the preinstalled Chromium (with an `overrides` entry for `playwright-core`).

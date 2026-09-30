@@ -22,6 +22,9 @@ jobs:
       REVALIDATE_SECRET: ci-only-revalidate-secret
       CRON_SECRET: ci-only-cron-secret
       SUPABASE_DB_URL: postgresql://postgres:postgres@127.0.0.1:54322/postgres
+      # Tests sign in dozens of times from one address; ignored when SITE_STAGE=production.
+      DISABLE_RATE_LIMITS: "1"
+      NEXT_PUBLIC_SITE_URL: http://localhost:3100
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -37,7 +40,7 @@ jobs:
         run: npm run db:start
       - name: Export Supabase connection
         run: |
-          npx supabase status -o env | sed -n 's/^API_URL=/SUPABASE_URL=/p; s/^PUBLISHABLE_KEY=/SUPABASE_ANON_KEY=/p' | tr -d '"' >> "$GITHUB_ENV"
+          npx supabase status -o env | sed -n 's/^API_URL=/SUPABASE_URL=/p; s/^PUBLISHABLE_KEY=/SUPABASE_ANON_KEY=/p; s/^SECRET_KEY=/SUPABASE_SERVICE_ROLE_KEY=/p' | tr -d '"' >> "$GITHUB_ENV"
       - name: Database lint
         run: npm run db:lint
       - name: Seed file is up to date with lib/content
@@ -46,7 +49,7 @@ jobs:
         run: npm run build
       - name: Install Playwright browser
         run: npx playwright install --with-deps chromium
-      - name: Gate, hero, weekend, stay, calendar and axe (WCAG 2.2 AA) tests
+      - name: Gate, hero, weekend, stay, calendar, RSVP, photo and axe (WCAG 2.2 AA) tests
         run: npx playwright test --project=chromium
       - uses: actions/upload-artifact@v4
         if: failure()

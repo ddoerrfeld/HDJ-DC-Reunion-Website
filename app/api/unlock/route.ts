@@ -8,10 +8,10 @@ import {
   safeNextPath,
   type UnlockError,
 } from "@/lib/gate";
-import { clientKey, isRateLimited, recordAttempt } from "@/lib/rate-limit";
+import { clientKey, rateLimit } from "@/lib/rate-limit";
 
-const MAX_FAILURES = 8;
-const FAILURE_WINDOW_MS = 15 * 60 * 1000;
+const MAX_ATTEMPTS = 10;
+const WINDOW_SECONDS = 15 * 60;
 const FAILURE_DELAY_MS = 400;
 
 function backToGate(request: NextRequest, error: UnlockError, next: string) {
@@ -30,12 +30,12 @@ export async function POST(request: NextRequest) {
   const config = getGateConfig();
   if (!config) return backToGate(request, "config", next);
 
-  const key = `unlock:${clientKey(request.headers)}`;
-  if (isRateLimited(key, MAX_FAILURES)) return backToGate(request, "locked", next);
   if (passcode.trim() === "") return backToGate(request, "empty", next);
+  if (!(await rateLimit(`unlock:${clientKey(request.headers)}`, MAX_ATTEMPTS, WINDOW_SECONDS))) {
+    return backToGate(request, "locked", next);
+  }
 
   if (!(await passcodeMatches(passcode, config))) {
-    recordAttempt(key, FAILURE_WINDOW_MS);
     await new Promise((resolve) => setTimeout(resolve, FAILURE_DELAY_MS));
     return backToGate(request, "wrong", next);
   }

@@ -55,6 +55,25 @@ isOneToOne: false
       referencedColumns: ["id"]
     }
                   ]
+                },"email_log": {
+                  Row: {
+                    "attendee_id": string | null,"body_text": string | null,"created_at": string,"id": string,"provider_id": string | null,"subject": string,"template": string,"to_email": string,"transport": string
+                  }
+                  Insert: {
+                    "attendee_id"?: string | null,"body_text"?: string | null,"created_at"?: string,"id"?: string,"provider_id"?: string | null,"subject": string,"template": string,"to_email": string,"transport": string
+                  }
+                  Update: {
+                    "attendee_id"?: string | null,"body_text"?: string | null,"created_at"?: string,"id"?: string,"provider_id"?: string | null,"subject"?: string,"template"?: string,"to_email"?: string,"transport"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "email_log_attendee_id_fkey"
+      columns: ["attendee_id"]
+isOneToOne: false
+      referencedRelation: "attendees"
+      referencedColumns: ["id"]
+    }
+                  ]
                 },"event_items": {
                   Row: {
                     "address": string | null,"address_confirmed": boolean,"allows_guests": boolean,"capacity": number | null,"choice_group": string | null,"confirmed": boolean,"created_at": string,"day": string,"description_md": string,"ends_at": string | null,"halftime_eligible": boolean,"id": string,"location_name": string | null,"price_cents": number | null,"requires_payment": boolean,"slug": string,"sort": number,"starts_at": string | null,"title": string,"unconfirmed_note": string | null,"updated_at": string,"visible": boolean
@@ -131,6 +150,19 @@ isOneToOne: false
       referencedRelation: "attendees"
       referencedColumns: ["id"]
     }
+                  ]
+                },"rate_limits": {
+                  Row: {
+                    "count": number,"key": string,"window_start": string
+                  }
+                  Insert: {
+                    "count": number,"key": string,"window_start": string
+                  }
+                  Update: {
+                    "count"?: number,"key"?: string,"window_start"?: string
+                  }
+                  Relationships: [
+                    
                   ]
                 },"refund_flags": {
                   Row: {
@@ -233,11 +265,34 @@ isOneToOne: false
             [_ in never]: never
           }
           Functions: {
-            "is_admin":
+            "event_availability":
+{ Args: Record<PropertyKey, never>; Returns: {
+              "capacity": number,"slug": string,"taken": number
+            }[]
+                           },
+"is_admin":
 { Args: Record<PropertyKey, never>; Returns: boolean
                            },
 "keepalive":
 { Args: Record<PropertyKey, never>; Returns: string
+                           },
+"rate_limit_hit":
+{ Args: { "p_key": string,"p_max": number,"p_window_seconds": number }; Returns: boolean
+                           },
+"rsvp_apply_selections":
+{ Args: { "p_attendee_id": string,"p_selections": Json }; Returns: undefined
+                           },
+"rsvp_create":
+{ Args: { "p": Json,"p_token_hash": string }; Returns: Json
+                           },
+"rsvp_delete":
+{ Args: { "p_token_hash": string }; Returns: Json
+                           },
+"rsvp_rotate_token":
+{ Args: { "p_email": string,"p_new_hash": string }; Returns: Json
+                           },
+"rsvp_update":
+{ Args: { "p": Json,"p_token_hash": string }; Returns: Json
                            }
           }
           Enums: {

@@ -27,10 +27,11 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
       className={`${graduate.variable} ${bitter.variable} ${sourceSans.variable}`}
       suppressHydrationWarning
     >
-      <head>
-        <script dangerouslySetInnerHTML={{ __html: heroBootScript }} />
-      </head>
       <body>
+        {/* First in <body>, not <head>: Next inserts stylesheet links into <head> at varying
+            times, which made React's hydration of an inline head script intermittently fail
+            (#418) and reset <html> attributes. It still runs before anything is painted. */}
+        <script dangerouslySetInnerHTML={{ __html: heroBootScript }} />
         {isPreview() ? <PreviewRibbon /> : null}
         {children}
       </body>
