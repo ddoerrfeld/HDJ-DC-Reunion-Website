@@ -88,7 +88,9 @@ The owner deferred to engineering judgment on every issue flagged in the Phase 1
 ## Implementation notes
 
 - Next.js 16: middleware is `proxy.ts`. Read `node_modules/next/dist/docs/` before using unfamiliar APIs.
-- Domain: **crownjacobs77.com** (registered at Cloudflare). `SITE_URL` in `lib/site.ts`.
+- Domain: **crownjacobs77.com** (registered at Cloudflare). `SITE_URL` in `lib/site.ts`. As of 2026-09-30 the domain returns Vercel `NOT_FOUND`: no production deployment yet (Vercel's production branch must be set to this repo's working branch, or `main` created).
+- Production Supabase (`dbaoigdmkfzkxwvzifmq`, us-east-2): all four migrations applied 2026-09-30 via the Management API and recorded in `supabase_migrations.schema_migrations`. **`supabase/seed.sql` not yet loaded** (needs owner go-ahead). Tokens are read from environment variables (`SUPABASE_ACCESS_TOKEN`, `VERCEL_TOKEN`, `CLOUDFLARE_API_TOKEN`, `RESEND_API_KEY`), never pasted into chat or committed.
+- Yearbook scans: `ddoerrfeld/crownjacobs77-yearbooks` (`jacobs-1977/`, `crown-1977/`, files numbered cover to cover). Clone it with `add_repo` (access: push) to `/home/user/crownjacobs77-yearbooks`.
 - Data: `lib/data/*.ts` is the only data-access layer (Supabase via `lib/supabase/server.ts`). Seed facts live in `lib/content/*-seed.ts`; `supabase/seed.sql` is generated from them (CI fails if stale).
 - Local DB: `npm run db:start` (Docker). If Docker isn’t running in a cloud session: `sudo dockerd &` first. Tests mutate the local DB via `psql` (`tests/db.ts`) and restore it.
 - After changing migrations: `npm run db:reset && npm run db:types`.
