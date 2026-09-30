@@ -48,14 +48,16 @@ Fonts (via `next/font`): **Graduate** (display, uppercase, +2% tracking, never b
 |---|---|
 | 1 — Foundation & Design System | ✅ Approved by owner |
 | 2 — Data Layer & Weekend Page | ✅ Approved by owner |
-| 3 — RSVP (no payment) | Built — awaiting owner approval (production Supabase, Resend, Turnstile keys not yet connected) |
-| 4 — Payments | Not started |
-| 5 — Yearbooks (request assets first) | Not started |
+| 3 — RSVP (no payment) | ✅ Approved by owner (production Supabase, Resend, Turnstile keys not yet connected) |
+| 4 — Payments | ❌ Cancelled by owner — no payment processor. Paid events show a “Payment details coming soon” placeholder. |
+| 5 — Yearbooks (request assets first) | Waiting for yearbook files (owner uploading to a separate private GitHub repo) |
 | 6 — Directory | Not started |
 | 7 — Admin | Not started |
 | 8 — Hardening & Launch | Not started |
 
 ## Approved deviations from SPEC
+
+- **No online payments (owner decision after Phase 3).** SPEC §8 and Phase 4 are cancelled. `requires_payment`/`price_cents` still drive price badges, but registrations are `confirmed` (or `waitlist`); the RSVP review step, confirmation page and email show the `PaymentComingSoon` placeholder instead. No Stripe code, keys, or webhooks. `payments`/`refund_flags` tables remain unused.
 
 The owner deferred to engineering judgment on every issue flagged in the Phase 1 plan (“do not build to spec if you find a better way”). In effect:
 

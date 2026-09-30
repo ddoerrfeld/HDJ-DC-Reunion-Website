@@ -179,7 +179,7 @@ export default function StyleguidePage() {
           <Button variant="primary">RSVP</Button>
           <Button variant="secondary">See the weekend</Button>
           <Button variant="primary" icon={<ArrowRight size={20} strokeWidth={1.75} aria-hidden="true" />}>
-            Continue to Payment
+            Submit RSVP
           </Button>
           <Button variant="secondary" icon={<CalendarPlus size={20} strokeWidth={1.75} aria-hidden="true" />}>
             Add to calendar

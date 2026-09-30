@@ -123,7 +123,7 @@ for (const size of SIZES) {
         selections: { "fri-tour-jacobs": { selected: true, guests: 0, halftime: false, guestNames: [] }, "sat-dinner": { selected: true, guests: 1, halftime: false, guestNames: [{ first: "Tom", last: "Johnson" }] } },
         showInDirectory: true } })), email);
       await page.reload();
-      await page.getByRole("button", { name: "Continue to Payment" }).click();
+      await page.getByRole("button", { name: "Submit RSVP" }).click();
       await page.waitForURL(/\/rsvp\/confirmed/);
       await page.evaluate(() => document.fonts.ready);
       await page.screenshot({ path: `${OUT}/rsvp-confirmed-${size.name}.png`, fullPage: true });
@@ -174,7 +174,7 @@ test("email previews", async ({ page }) => {
     lines: [
       { title: "School Tour — Jacobs", when: "Friday, October 8 · 3:30–4:30 PM", where: "Harry D. Jacobs High School", guests: 0, status: "Confirmed" },
       { title: "Football: Jacobs vs. Prairie Ridge", when: "Friday, October 8 · 7:00 PM", where: "Jacobs High School", guests: 1, status: "Confirmed" },
-      { title: "Reunion Dinner", when: "Saturday, October 9 · 6:30–10:30 PM", where: "West Dundee VFW Post 2298", guests: 1, status: "Payment due" },
+      { title: "Reunion Dinner", when: "Saturday, October 9 · 6:30–10:30 PM", where: "West Dundee VFW Post 2298", guests: 1, status: "Confirmed", paid: true },
     ],
   });
   const lost = editLinkEmail({ firstName: "Susan", editUrl: "https://crownjacobs77.com/rsvp/edit/EXAMPLE", reason: "lost" });

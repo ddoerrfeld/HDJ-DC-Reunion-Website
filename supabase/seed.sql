@@ -19,8 +19,6 @@ insert into public.settings (key, value, is_public) values
   ('refund_cutoff_date', 'null'::jsonb, true),
   ('organizer_contact_email', 'null'::jsonb, true),
   ('faq_md', 'null'::jsonb, true),
-  ('fee_handling', '"absorb"'::jsonb, false),
-  ('pay_offline_enabled', 'false'::jsonb, true),
   ('feature_flags', '{"in_memoriam":false,"faq":false,"yearbook_ocr":false}'::jsonb, true),
   ('section_gate_enabled', 'true'::jsonb, false),
   ('section_gate_passcode_hash', 'null'::jsonb, false)

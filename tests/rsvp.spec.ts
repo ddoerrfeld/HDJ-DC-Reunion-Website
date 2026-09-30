@@ -114,12 +114,15 @@ test.describe("RSVP (SPEC §15 Phase 3)", () => {
     await expect(page.getByText("Susan “Sue” (Miller) Johnson")).toBeVisible();
     await expect(page.getByRole("checkbox", { name: /Show me on the Who’s Coming page/ })).toBeChecked();
     await axeClean(page);
-    await page.getByRole("button", { name: "Continue to Payment" }).click();
+    await expect(page.getByText("Payment details coming soon")).toBeVisible();
+    await page.getByRole("button", { name: "Submit RSVP" }).click();
 
     // Confirmation.
     await expect(page).toHaveURL(/\/rsvp\/confirmed$/, { timeout: 30_000 });
     await expect(page.getByRole("heading", { level: 1, name: "See you in October" })).toBeVisible();
-    await expect(page.getByText("Payment due")).toBeVisible();
+    // No online payment: paid events are confirmed with a "details coming soon" placeholder.
+    await expect(page.getByText("Payment details coming soon")).toBeVisible();
+    await expect(page.getByText("Payment due")).toHaveCount(0);
     await axeClean(page);
 
     // Database state.
@@ -130,7 +133,7 @@ test.describe("RSVP (SPEC §15 Phase 3)", () => {
     const regs = sql(
       `select e.slug || ':' || r.status || ':' || r.guest_count || ':' || r.halftime_walk from public.registrations r join public.event_items e on e.id = r.event_item_id where r.attendee_id = '${attendeeId}' order by e.sort`,
     ).split("\n");
-    expect(regs).toEqual(["fri-tour-jacobs:confirmed:0:false", "fri-game-jacobs:confirmed:2:true", "sat-dinner:pending_payment:1:false"]);
+    expect(regs).toEqual(["fri-tour-jacobs:confirmed:0:false", "fri-game-jacobs:confirmed:2:true", "sat-dinner:confirmed:1:false"]);
     expect(sql(`select first_name || ' ' || last_name from public.guests g join public.registrations r on r.id = g.registration_id where r.attendee_id = '${attendeeId}'`)).toBe("Tom Johnson");
 
     // Stored photo: square, EXIF/GPS-free, in all three sizes; the original is gone.
@@ -148,6 +151,7 @@ test.describe("RSVP (SPEC §15 Phase 3)", () => {
     const body = lastEmail(email, "rsvp-confirmation");
     expect(body).toContain("YOU’RE ON THE LIST!");
     expect(body).toContain("Reunion Dinner");
+    expect(body).toContain("PAYMENT DETAILS COMING SOON");
     const link = editPath(body);
     expect(link).not.toBeNull();
     expect(sql(`select edit_token_hash from public.attendees where id = '${attendeeId}'`)).not.toContain(link!.split("/").pop()!);

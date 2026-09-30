@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { ClearDraft } from "@/components/rsvp/ClearDraft";
+import { PaymentComingSoon } from "@/components/rsvp/PaymentComingSoon";
 import { RsvpHeader } from "@/components/rsvp/RsvpHeader";
 import { Badge } from "@/components/ui/Badge";
 import { ButtonLink } from "@/components/ui/Button";
@@ -13,7 +14,7 @@ import { RSVP_COOKIE } from "@/lib/rsvp/token";
 
 export const metadata: Metadata = { title: "RSVP confirmed", robots: { index: false, follow: false } };
 
-const TONE = { Confirmed: "crown", "Payment due": "paid", Waitlist: "neutral" } as const;
+const TONE = { Confirmed: "crown", Waitlist: "neutral" } as const;
 
 export default async function ConfirmedPage({
   searchParams,
@@ -24,8 +25,11 @@ export default async function ConfirmedPage({
   const saved = await getRsvpByToken(token);
   if (!saved || !token) redirect("/rsvp");
   const { updated, email } = await searchParams;
-  const lines = summaryLines(saved.registrations, await getEventItems());
-  const due = lines.filter((l) => l.status === "Payment due");
+  const items = await getEventItems();
+  const lines = summaryLines(saved.registrations, items);
+  const paidTitles = items
+    .filter((i) => i.requiresPayment && saved.registrations.some((r) => r.slug === i.slug && r.status !== "waitlist"))
+    .map((i) => i.title);
 
   return (
     <div className="container-page py-16 md:py-20">
@@ -67,16 +71,12 @@ export default async function ConfirmedPage({
               </li>
             ))}
           </ul>
-          {due.length > 0 ? (
-            <p className="rounded-card bg-jacobs-tint p-4 text-body text-ink">
-              <strong>Payment:</strong> online payment for {due.map((d) => d.title).join(", ")} opens soon.
-              Your spot is saved — we’ll email you a secure link to pay.
-            </p>
-          ) : null}
           {lines.some((l) => l.status === "Waitlist") ? (
             <p className="text-body text-ink">We’ll email you if a waitlisted spot opens up.</p>
           ) : null}
         </section>
+
+        <PaymentComingSoon titles={paidTitles} headingLevel="h2" />
 
         <div className="grid gap-4 md:grid-cols-2">
           <div className="card flex flex-col gap-3 p-6">

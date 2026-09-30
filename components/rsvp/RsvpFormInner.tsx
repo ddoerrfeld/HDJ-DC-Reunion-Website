@@ -9,6 +9,7 @@ import { DRAFT_KEY, EMPTY_PERSON, selectedList } from "@/lib/rsvp/form-model";
 import { guestNameErrors, personErrors, PersonSchema } from "@/lib/rsvp/schema";
 import { ErrorSummary } from "./ErrorSummary";
 import { PhotoPicker } from "./PhotoPicker";
+import { PaymentComingSoon } from "./PaymentComingSoon";
 import { ProgressSteps } from "./ProgressSteps";
 import { AboutStep, GuestsStep, ReviewStep, WeekendStep } from "./steps";
 import { Turnstile } from "./Turnstile";
@@ -142,8 +143,8 @@ export default function RsvpFormInner({ mode, items, initial, token, turnstileSi
     });
   }
 
-  const hasPaid = selectedList(state).some((s) => items.find((i) => i.slug === s.slug)?.requiresPayment);
-  const submitLabel = mode === "edit" ? "Save changes" : hasPaid ? "Continue to Payment" : "Submit RSVP";
+  const paidTitles = items.filter((i) => i.requiresPayment && state.selections[i.slug]?.selected).map((i) => i.title);
+  const submitLabel = mode === "edit" ? "Save changes" : "Submit RSVP";
   const school = state.person.gradSchool || "other";
 
   return (
@@ -197,12 +198,7 @@ export default function RsvpFormInner({ mode, items, initial, token, turnstileSi
               onShowInDirectory={(showInDirectory) => setState((s) => ({ ...s, showInDirectory }))}
             />
             {mode === "create" ? <Turnstile siteKey={turnstileSiteKey} onToken={setTurnstileToken} /> : null}
-            {hasPaid && mode === "create" ? (
-              <p className="rounded-card bg-jacobs-tint p-4 text-body text-ink">
-                Online payment for paid events opens soon. Your spot is saved now, and we’ll email you a
-                secure link to pay.
-              </p>
-            ) : null}
+            <PaymentComingSoon titles={paidTitles} />
           </>
         ) : null}
       </section>

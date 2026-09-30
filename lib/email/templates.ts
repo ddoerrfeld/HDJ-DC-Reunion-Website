@@ -10,7 +10,9 @@ export interface EmailLine {
   when: string;
   where: string | null;
   guests: number;
-  status: "Confirmed" | "Payment due" | "Waitlist";
+  status: "Confirmed" | "Waitlist";
+  /** Event costs money; how to pay is shared by the organizers (no online payment). */
+  paid?: boolean;
 }
 
 function esc(value: string): string {
@@ -84,12 +86,12 @@ function linesText(lines: EmailLine[]): string {
 }
 
 function paymentNote(lines: EmailLine[]): { html: string; text: string } {
-  const due = lines.filter((l) => l.status === "Payment due").map((l) => l.title);
+  const due = lines.filter((l) => l.paid && l.status !== "Waitlist").map((l) => l.title);
   if (due.length === 0) return { html: "", text: "" };
   const list = due.join(", ");
   return {
-    html: `<p style="margin:0 0 16px 0;padding:16px;background:#F6EAD0;border-left:4px solid ${GOLD};"><strong>Payment:</strong> online payment for ${esc(list)} opens soon. We’ll email you a secure link to pay — your spot is saved.</p>`,
-    text: `PAYMENT: online payment for ${list} opens soon. We’ll email you a secure link to pay — your spot is saved.`,
+    html: `<p style="margin:0 0 16px 0;padding:16px;background:#F6EAD0;border-left:4px solid ${GOLD};"><strong>Payment details coming soon:</strong> your spot for ${esc(list)} is saved. There’s nothing to pay online — the organizers will let you know how to pay.</p>`,
+    text: `PAYMENT DETAILS COMING SOON: your spot for ${list} is saved. There’s nothing to pay online — the organizers will let you know how to pay.`,
   };
 }
 

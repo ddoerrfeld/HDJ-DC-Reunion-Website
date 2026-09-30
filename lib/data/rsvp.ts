@@ -87,9 +87,7 @@ export function isPastDeadline(deadline: string | null, now = new Date()): boole
 }
 
 export function statusLabel(status: RegistrationStatus): EmailLine["status"] {
-  if (status === "waitlist") return "Waitlist";
-  if (status === "pending_payment" || status === "pending_offline") return "Payment due";
-  return "Confirmed";
+  return status === "waitlist" ? "Waitlist" : "Confirmed";
 }
 
 export function describeWhen(item: EventItem): string {
@@ -104,6 +102,7 @@ export function summaryLines(registrations: SavedRegistration[], items: EventIte
     .map((item) => ({ item, reg: registrations.find((r) => r.slug === item.slug) }))
     .filter((x): x is { item: EventItem; reg: SavedRegistration } => x.reg !== undefined)
     .map(({ item, reg }) => ({
+      paid: item.requiresPayment,
       title: item.title,
       when: describeWhen(item),
       where: item.locationName,

@@ -14,8 +14,6 @@ export const SETTINGS_SEED: readonly SettingSeed[] = [
   { key: "refund_cutoff_date", value: null, isPublic: true },
   { key: "organizer_contact_email", value: null, isPublic: true },
   { key: "faq_md", value: null, isPublic: true },
-  { key: "fee_handling", value: "absorb", isPublic: false },
-  { key: "pay_offline_enabled", value: false, isPublic: true },
   {
     key: "feature_flags",
     value: { in_memoriam: false, faq: false, yearbook_ocr: false },
