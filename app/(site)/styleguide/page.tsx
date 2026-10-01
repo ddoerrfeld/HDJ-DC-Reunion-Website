@@ -3,7 +3,11 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import type { ReactNode } from "react";
 import { Monogram77 } from "@/components/brand/Monogram77";
+import { DuotoneBand } from "@/components/brand/DuotoneBand";
+import { CrownVikingMark, JacobsMark1977 } from "@/components/brand/SchoolMarks";
 import { SeamBand, SeamRule } from "@/components/brand/Seam";
+import Image from "next/image";
+import modernJacobs from "@/assets/brand/HDJ.jpg";
 import { Badge, ToBeConfirmed } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { ComingSoonCard } from "@/components/ui/ComingSoonCard";
@@ -21,7 +25,7 @@ const SWATCHES = [
   { token: "--crown-blue-deep", hex: "#14336B", fg: "text-white", note: "Links on paper 10.87:1 · white 12.24:1" },
   { token: "--jacobs-brown", hex: "#4A2C12", fg: "text-white", note: "Jacobs primary · white 12.65:1" },
   { token: "--jacobs-gold", hex: "#F0B429", fg: "text-jacobs-brown", note: "Fills only · brown text 6.79:1 · never text on paper" },
-  { token: "--jacobs-tan", hex: "#C9A26B", fg: "text-ink", note: "Accents only · 2.10:1 on paper" },
+  { token: "--jacobs-tan", hex: "#BB9054", fg: "text-ink", note: "1977 cover tan · accents only · 2.58:1 on paper" },
   { token: "--seam-gold", hex: "#E8A317", fg: "text-ink", note: "The seam & focus ring (with ink ring)" },
   { token: "--paper", hex: "#F7F1E3", fg: "text-ink", note: "Page background · ink 15.24:1" },
   { token: "--ink", hex: "#1E1B16", fg: "text-white", note: "Body text" },
@@ -344,6 +348,45 @@ export default function StyleguidePage() {
           </div>
           <Spec>Split surface — hero and closing call to action.</Spec>
         </div>
+      </Section>
+
+      <Section id="sg-marks" title="School marks (from the 1977 yearbooks) — your decision">
+        <div className="grid gap-8 md:grid-cols-3">
+          <figure className="card flex flex-col items-center gap-4 p-6 text-center">
+            <JacobsMark1977 className="size-40 text-jacobs-brown" />
+            <figcaption>
+              <p className="font-heading text-lead font-bold text-ink">Jacobs, 1977 mark (recommended)</p>
+              <Spec>Printed in the 1977 Eyrie, p. 179; traced to vector. SPEC prefers the period mark.</Spec>
+            </figcaption>
+          </figure>
+          <figure className="card flex flex-col items-center gap-4 p-6 text-center">
+            <Image src={modernJacobs} alt="Jacobs High School Golden Eagles, modern logo" className="h-40 w-auto" />
+            <figcaption>
+              <p className="font-heading text-lead font-bold text-ink">Jacobs, modern mark</p>
+              <Spec>The file supplied as assets/brand/HDJ.jpg — post-1977.</Spec>
+            </figcaption>
+          </figure>
+          <figure className="card flex flex-col items-center gap-4 p-6 text-center">
+            <CrownVikingMark className="size-40" />
+            <figcaption>
+              <p className="font-heading text-lead font-bold text-ink">Crown Vikings (original)</p>
+              <Spec>The 1977 Valhallan has no emblem — only cover art and a costumed mascot — so this is a simple original helmet, per SPEC.</Spec>
+            </figcaption>
+          </figure>
+        </div>
+        <p className="mt-6 measure text-body text-ink">
+          Colors sampled from the books: Jacobs cover tan <code>#BB9054</code> (now <code>--jacobs-tan</code>), Jacobs
+          endpapers <code>#EAD94A</code>, Crown endpapers <code>#69B2B7</code>. The Crown book has no royal blue to
+          sample (its cover is a painting), so <code>--crown-blue</code> is unchanged.
+        </p>
+      </Section>
+
+      <Section id="sg-duotone" title="Yearbook duotones">
+        <DuotoneBand className="rounded-card" />
+        <Spec>
+          Crown football (Valhallan p. 32) and the Jacobs entrance (Eyrie p. 5), in each school’s colors, split by the
+          seam. Picked so no one is recognizable. Used at the top of the Yearbooks page.
+        </Spec>
       </Section>
 
       <Section id="sg-icons" title="Icons">

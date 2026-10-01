@@ -48,6 +48,7 @@ test.describe.configure({ mode: "serial" });
 
 test.describe("RSVP (SPEC §15 Phase 3)", () => {
   test.afterAll(() => {
+    sql("delete from public.email_log where template like 'classmate-%' and attendee_id in (select id from public.attendees where email::text like 'rsvp-test-%')");
     sql("delete from public.attendees where email::text like 'rsvp-test-%'");
     sql("delete from public.email_log where to_email::text like 'rsvp-test-%'");
   });
@@ -117,9 +118,10 @@ test.describe("RSVP (SPEC §15 Phase 3)", () => {
     await expect(page.getByText("Payment details coming soon")).toBeVisible();
     await page.getByRole("button", { name: "Submit RSVP" }).click();
 
-    // Confirmation.
-    await expect(page).toHaveURL(/\/rsvp\/confirmed$/, { timeout: 30_000 });
+    // Confirmation. "Susan Miller" isn't in the senior roster: saved, but held for the organizer.
+    await expect(page).toHaveURL(/\/rsvp\/confirmed\?review=1$/, { timeout: 30_000 });
     await expect(page.getByRole("heading", { level: 1, name: "See you in October" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "The organizer will confirm you shortly" })).toBeVisible();
     // No online payment: paid events are confirmed with a "details coming soon" placeholder.
     await expect(page.getByText("Payment details coming soon")).toBeVisible();
     await expect(page.getByText("Payment due")).toHaveCount(0);
@@ -168,11 +170,90 @@ test.describe("RSVP (SPEC §15 Phase 3)", () => {
     await page.getByRole("button", { name: "Next" }).click();
     await page.getByRole("button", { name: "Next" }).click();
     await page.getByRole("button", { name: "Save changes" }).click();
-    await expect(page).toHaveURL(/\/rsvp\/confirmed\?updated=1$/, { timeout: 30_000 });
+    await expect(page).toHaveURL(/\/rsvp\/confirmed\?updated=1&review=1$/, { timeout: 30_000 });
     await expect(page.getByRole("heading", { level: 1, name: "RSVP updated" })).toBeVisible();
     expect(sql(`select nickname from public.attendees where id = '${attendeeId}'`)).toBe("Susie");
     expect(sql(`select count(*) from public.registrations r join public.event_items e on e.id = r.event_item_id where r.attendee_id = '${attendeeId}' and e.slug = 'sat-dinner'`)).toBe("0");
     expect(lastEmail(email, "rsvp-updated")).toContain("RSVP UPDATED");
+
+    // Classmate check: the organizer got one review email with a signed approval link.
+    expect(sql(`select classmate_status from public.attendees where id = '${attendeeId}'`)).toBe("pending");
+    const review = sql(
+      `select body_text from public.email_log where template = 'classmate-review' and attendee_id = '${attendeeId}' order by created_at desc limit 1`,
+    );
+    expect(review).toContain("A NEW RSVP NEEDS A QUICK CHECK");
+    expect(sql(`select count(*) from public.email_log where template = 'classmate-review' and attendee_id = '${attendeeId}'`)).toBe("1");
+    const approve = review.match(/\/rsvp\/approve\/[0-9a-f-]{36}\?s=[A-Za-z0-9_-]+/)?.[0];
+    expect(approve).toBeTruthy();
+    // A tampered signature is refused.
+    const bad = await page.goto(approve!.replace(/s=.{4}/, "s=AAAA"));
+    expect(bad?.status()).toBe(404);
+    await page.goto(approve!);
+    await expect(page.getByRole("heading", { level: 1, name: "Confirm a classmate" })).toBeVisible();
+    await axeClean(page);
+    await page.getByRole("button", { name: "Yes, this is a classmate" }).click();
+    await expect(page.getByRole("heading", { level: 1, name: "Classmate confirmed" })).toBeVisible();
+    expect(sql(`select classmate_status from public.attendees where id = '${attendeeId}'`)).toBe("approved");
+    expect(lastEmail(email, "classmate-approved")).toContain("YOU’RE CONFIRMED!");
+  });
+
+  test("a classmate in the senior roster is confirmed at once and can link their ’77 portrait (See Me in ’77)", async ({ page, request }) => {
+    const email = unique();
+    await unlock(page, "/rsvp");
+    await page.getByLabel("First name").fill("Donna");
+    await page.getByLabel("Your last name in high school (maiden name, if it’s changed)").fill("Coleman");
+    await page.getByLabel("Email address").fill(email);
+    await page.getByText("Crown ’77", { exact: true }).click();
+    await page.getByRole("button", { name: "Next" }).click();
+
+    // The picker opens straight to the page where the roster found her name.
+    await page.getByRole("button", { name: "Find my senior photo" }).click();
+    const dialog = page.getByRole("dialog");
+    await expect(dialog.getByText(/We found your name on page \d+/)).toBeVisible({ timeout: 15_000 });
+    await axeClean(page);
+    await dialog.getByRole("button", { name: /^Open page \d+$/ }).click();
+    await expect(dialog.getByRole("heading", { name: "Tap your photo" })).toBeVisible();
+    await dialog.getByRole("button", { name: "Place the frame myself" }).click();
+    await expect(dialog.getByRole("heading", { name: "Frame your portrait" })).toBeVisible();
+    await axeClean(page);
+    await dialog.getByRole("button", { name: "Looks right" }).click();
+    await expect(page.getByRole("img", { name: "Your 1977 senior portrait" })).toBeVisible();
+
+    await page.getByRole("button", { name: "Next" }).click();
+    await page.getByRole("radio", { name: /School Tour — Crown/ }).check();
+    for (let i = 0; i < 2; i++) await page.getByRole("button", { name: "Next" }).click();
+    await page.getByRole("button", { name: "Submit RSVP" }).click();
+
+    // Matched: no review note, yearbooks offered, portrait rendered from the yearbook asset.
+    await expect(page).toHaveURL(/\/rsvp\/confirmed$/, { timeout: 30_000 });
+    await expect(page.getByRole("heading", { name: "The organizer will confirm you shortly" })).toHaveCount(0);
+    await expect(page.getByRole("heading", { name: "The yearbooks are open to you" })).toBeVisible();
+    await expect(page.getByRole("img", { name: "Your 1977 senior portrait" })).toBeVisible();
+    const [status, thenPath, pageId] = sql(
+      `select classmate_status, then_photo_path, yearbook_page_id from public.attendees where email = '${email}'`,
+    ).split("|");
+    expect(status).toBe("matched");
+    expect(thenPath).toMatch(/^t\/[0-9a-f-]{36}$/);
+    expect(pageId).toMatch(/^[0-9a-f-]{36}$/);
+    const portrait = await request.get(`${process.env.SUPABASE_URL}/storage/v1/object/public/attendee-photos/${thenPath}/512.webp`);
+    expect(portrait.ok()).toBe(true);
+    const meta = await sharp(await portrait.body()).metadata();
+    expect([meta.width, meta.height]).toEqual([512, 640]);
+    expect(meta.exif).toBeUndefined();
+
+    // With the launch-time yearbook gate on, this device is already let in.
+    await page.context().addCookies([{ name: "c77_preview_section_gate", value: "1", domain: "localhost", path: "/" }]);
+    await page.goto("/yearbooks/crown");
+    await expect(page.getByRole("heading", { level: 1, name: /Crown ’77/ })).toBeVisible();
+
+    // Deleting the RSVP removes the portrait too.
+    const link = editPath(lastEmail(email, "rsvp-confirmation"))!;
+    await page.goto(link);
+    await page.getByRole("button", { name: "Delete my RSVP" }).click();
+    await page.getByRole("button", { name: "Yes, delete my RSVP" }).click();
+    await expect(page).toHaveURL(/\/rsvp\/deleted$/);
+    const gone = await request.get(`${process.env.SUPABASE_URL}/storage/v1/object/public/attendee-photos/${thenPath}/512.webp`);
+    expect(gone.status()).toBeGreaterThanOrEqual(400);
   });
 
   test("duplicate email: no second RSVP, a fresh link is emailed, the old link stops working", async ({ page }) => {

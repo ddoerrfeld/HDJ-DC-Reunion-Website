@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { DuotoneBand } from "@/components/brand/DuotoneBand";
 import { SeamRule } from "@/components/brand/Seam";
 import { ButtonLink, Button } from "@/components/ui/Button";
 import { ComingSoonCard } from "@/components/ui/ComingSoonCard";
@@ -32,7 +33,9 @@ export default async function YearbooksPage({ searchParams }: { searchParams: Pr
   const ready = BOOK_ORDER.every((s) => covers[s]);
 
   return (
-    <div className="container-page py-16 md:py-24">
+    <>
+    <DuotoneBand />
+    <div className="container-page py-12 md:py-16">
       <header className="flex flex-col gap-3">
         <p className="type-eyebrow text-crown-blue-deep">The 1977 yearbooks</p>
         <h1 className="type-display text-h1 text-ink md:text-display">Yearbooks</h1>
@@ -67,7 +70,7 @@ export default async function YearbooksPage({ searchParams }: { searchParams: Pr
                   alt={`Cover of the ${SCHOOL_NAMES[school].short} yearbook`}
                   width={1100}
                   height={1440}
-                  className={`w-full rounded-r-sm shadow-[inset_6px_0_0_rgb(0_0_0/0.18),0_18px_36px_-16px_rgb(30_27_22/0.65)] ring-4 ${
+                  className={`aspect-[1100/1440] w-full rounded-r-sm object-cover shadow-[inset_6px_0_0_rgb(0_0_0/0.18),0_18px_36px_-16px_rgb(30_27_22/0.65)] ring-4 ${
                     school === "crown" ? "ring-crown-blue" : "ring-jacobs-brown"
                   }`}
                 />
@@ -97,6 +100,7 @@ export default async function YearbooksPage({ searchParams }: { searchParams: Pr
         </aside>
       ) : null}
     </div>
+    </>
   );
 }
 

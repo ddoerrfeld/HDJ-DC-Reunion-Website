@@ -134,6 +134,79 @@ for (const size of SIZES) {
       sql(`delete from public.attendees where email = '${email}'`);
     });
 
+    test("phase 5 yearbooks", async ({ page, context }) => {
+      test.setTimeout(180_000);
+      const shot = (name: string, fullPage = true) => page.screenshot({ path: `${OUT}/${name}-${size.name}.png`, fullPage });
+      await unlock(page, "/yearbooks");
+      await page.waitForLoadState("networkidle");
+      await shot("yearbooks-shelf");
+      await page.goto("/yearbooks/crown?page=88");
+      await page.waitForLoadState("networkidle");
+      await page.evaluate(() => document.fonts.ready);
+      await shot("yearbook-reader", false);
+      await page.keyboard.press("z");
+      await page.getByRole("button", { name: "Zoom in" }).click();
+      await page.getByRole("button", { name: "Zoom in" }).click();
+      await page.waitForTimeout(300);
+      await shot("yearbook-zoom", false);
+      await page.keyboard.press("Escape");
+      if (size.viewport.width < 1024) {
+        await page.getByRole("button", { name: "Pages" }).click();
+        await page.waitForTimeout(400);
+        await shot("yearbook-pages-sheet", false);
+        await page.keyboard.press("Escape");
+      }
+      // Launch-time gate: the classmate check.
+      await context.addCookies([{ name: "c77_preview_section_gate", value: "1", domain: "localhost", path: "/" }]);
+      await context.clearCookies({ name: "c77_classmate" });
+      await page.goto("/yearbooks");
+      await shot("yearbooks-classmate-check");
+      await page.goto("/yearbooks?verify=nomatch");
+      await shot("yearbooks-classmate-check-nomatch");
+      await context.clearCookies({ name: "c77_preview_section_gate" });
+
+      // See Me in ’77 from the RSVP Photo step.
+      await page.goto("/rsvp");
+      await page.evaluate(() =>
+        sessionStorage.setItem("c77-rsvp-draft", JSON.stringify({ step: 1, state: {
+          person: { firstName: "Donna", hsLastName: "Coleman", nameChanged: false, currentLastName: "", nickname: "", email: "donna@example.com", phone: "", city: "", state: "", gradSchool: "crown" },
+          photo: null, selections: {}, showInDirectory: true } })),
+      );
+      await page.reload();
+      await page.getByRole("heading", { level: 2, name: "Photo" }).waitFor();
+      await shot("rsvp-2-photo-seeme");
+      await page.getByRole("button", { name: "Find my senior photo" }).click();
+      await page.getByText(/We found your name on/).waitFor({ timeout: 15_000 });
+      await page.waitForLoadState("networkidle");
+      await shot("seeme-1-find-page", false);
+      await page.getByRole("button", { name: /^Open page/ }).click();
+      await page.getByRole("heading", { name: "Tap your photo" }).waitFor();
+      await page.waitForLoadState("networkidle");
+      await shot("seeme-2-tap", false);
+      const img = page.locator("dialog img").first();
+      const box = (await img.boundingBox())!;
+      await img.click({ position: { x: box.width * 0.41, y: box.height * 0.17 } });
+      await page.getByRole("heading", { name: "Frame your portrait" }).waitFor();
+      await page.waitForTimeout(500);
+      await shot("seeme-3-frame", false);
+      await page.getByRole("button", { name: "Looks right" }).click();
+      await page.waitForTimeout(300);
+      await page.evaluate(() => window.scrollTo(0, 0));
+      await shot("seeme-4-chosen");
+      await page.evaluate(() => sessionStorage.removeItem("c77-rsvp-draft"));
+
+      // Organizer's one-click approval page for an RSVP whose name isn't in the roster.
+      const email = `approve-shot-${size.name}@example.com`;
+      sql(`delete from public.attendees where email = '${email}'`);
+      const id = sql(`select (public.rsvp_create('{"person":{"firstName":"Patricia","nickname":"Patty","hsLastName":"Newcomer","email":"${email}","city":"Elgin","state":"IL","gradSchool":"other"},"selections":[{"slug":"fri-pregame"}]}'::jsonb, 'shot-${size.name}')) ->> 'attendeeId'`);
+      sql(`update public.attendees set classmate_status = 'pending' where id = '${id}'`);
+      const { createHmac } = await import("node:crypto");
+      const sig = createHmac("sha256", process.env.SITE_GATE_SECRET ?? "").update(`classmate-approve:${id}`).digest("base64url");
+      await page.goto(`/rsvp/approve/${id}?s=${sig}`);
+      await shot("organizer-approve");
+      sql(`delete from public.attendees where email = '${email}'`);
+    });
+
     test("mobile menu", async ({ page }) => {
       test.skip(size.viewport.width >= 1024, "desktop shows the full nav");
       await unlock(page);
