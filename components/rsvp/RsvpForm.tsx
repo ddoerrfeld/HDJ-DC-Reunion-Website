@@ -6,7 +6,7 @@ import type { RsvpFormProps } from "./RsvpFormInner";
 /** Skeleton shaped like the real form (SPEC §4.7) while the client form loads. */
 function FormSkeleton() {
   return (
-    <div className="flex flex-col gap-8" aria-busy="true" aria-label="Loading the RSVP form">
+    <div className="flex flex-col gap-8" role="status" aria-busy="true" aria-label="Loading the RSVP form">
       <div className="skeleton h-6 w-56" />
       <div className="skeleton h-2 w-full" />
       <div className="skeleton h-10 w-48" />
