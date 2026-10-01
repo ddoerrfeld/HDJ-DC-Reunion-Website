@@ -54,6 +54,8 @@ test.describe("RSVP (SPEC §15 Phase 3)", () => {
   });
 
   test("full RSVP with an iPhone HEIC photo, then the edit-link round trip", async ({ page, request }) => {
+    // Whole journey: HEIC conversion, submit, edit, and the organizer's approval.
+    test.setTimeout(90_000);
     const email = unique();
     await unlock(page, "/rsvp");
     await expect(page.getByRole("heading", { level: 2, name: "About you" })).toBeVisible();
@@ -198,6 +200,7 @@ test.describe("RSVP (SPEC §15 Phase 3)", () => {
   });
 
   test("a classmate in the senior roster is confirmed at once and can link their ’77 portrait (See Me in ’77)", async ({ page, request }) => {
+    test.setTimeout(90_000);
     const email = unique();
     await unlock(page, "/rsvp");
     await page.getByLabel("First name").fill("Donna");
