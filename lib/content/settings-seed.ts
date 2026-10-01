@@ -16,7 +16,7 @@ export const SETTINGS_SEED: readonly SettingSeed[] = [
   { key: "faq_md", value: null, isPublic: true },
   {
     key: "feature_flags",
-    value: { in_memoriam: false, faq: false, yearbook_ocr: false },
+    value: { in_memoriam: false, faq: false, yearbook_ocr: true },
     isPublic: true,
   },
   // Stage B section gate (SPEC §12.1): default ON; passcode hash set by admin.

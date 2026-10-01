@@ -57,6 +57,17 @@ test.describe("yearbook reader (SPEC §10.3)", () => {
     await expect(page.getByRole("dialog")).toHaveCount(0);
   });
 
+  test("name search finds a senior and jumps to their page", async ({ page }) => {
+    await unlock(page, "/yearbooks/crown?page=1");
+    await page.getByRole("searchbox", { name: "Find a name" }).fill("Coleman");
+    await page.getByRole("button", { name: "Search" }).click();
+    const hit = page.getByRole("button", { name: /^Page \d+/ }).filter({ hasText: /Coleman/ }).first();
+    await expect(hit).toBeVisible();
+    await axeClean(page);
+    await hit.click();
+    await expect.poll(() => pageParam(page)).toBeGreaterThan(1);
+  });
+
   test("phone: single page, Next and the Pages sheet", async ({ browser }) => {
     const context = await browser.newContext({ viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true });
     const page = await context.newPage();

@@ -20,7 +20,7 @@ insert into public.settings (key, value, is_public) values
   ('refund_cutoff_date', 'null'::jsonb, true),
   ('organizer_contact_email', '"reunion@crownjacobs77.com"'::jsonb, true),
   ('faq_md', 'null'::jsonb, true),
-  ('feature_flags', '{"in_memoriam":false,"faq":false,"yearbook_ocr":false}'::jsonb, true),
+  ('feature_flags', '{"in_memoriam":false,"faq":false,"yearbook_ocr":true}'::jsonb, true),
   ('section_gate_enabled', 'true'::jsonb, false),
   ('section_gate_passcode_hash', 'null'::jsonb, false)
 on conflict (key) do update set value = excluded.value

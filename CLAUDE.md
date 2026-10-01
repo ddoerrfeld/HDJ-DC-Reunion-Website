@@ -50,7 +50,7 @@ Fonts (via `next/font`): **Graduate** (display, uppercase, +2% tracking, never b
 | 2 — Data Layer & Weekend Page | ✅ Approved by owner |
 | 3 — RSVP (no payment) | ✅ Approved by owner (production Supabase, Resend, Turnstile keys not yet connected) |
 | 4 — Payments | ❌ Cancelled by owner — no payment processor. Paid events show a “Payment details coming soon” placeholder. |
-| 5 — Yearbooks | Built — awaiting owner approval (contact sheets approved 2026-09-30). School-mark choice pending on /styleguide. |
+| 5 — Yearbooks | ✅ Approved by owner 2026-10-01. Name search (OCR) turned on. School marks: Jacobs 1977 HDJ mark + original Crown helmet (owner deferred to judgment). |
 | 6 — Directory | Not started |
 | 7 — Admin | Not started |
 | 8 — Hardening & Launch | Not started |
@@ -66,6 +66,7 @@ Fonts (via `next/font`): **Graduate** (display, uppercase, +2% tracking, never b
 - **Thumbnail rail uses `content-visibility: auto` + lazy images** instead of a JS virtualizer (~180 items).
 - **Page numbers = position among visible pages** (cover = 1); `?page=N` uses it. Printed page labels are editable later (admin).
 - **See Me in ’77 crops are 4:5** (512×640 WebP/JPEG + 160×200), rendered on RSVP save from the yearbook asset (no orphan files). The picker opens on the page where the roster found the person’s name; tap your portrait → pre-zoomed crop.
+- **School marks (decided):** Jacobs uses the 1977 interlocked HDJ mark traced from the Eyrie (`JacobsMark1977`), not the modern “J” logo; Crown uses the original Viking helmet (`CrownVikingMark`) since the Valhallan has no emblem. Use them for school badges from Phase 6 on.
 - **Hidden pages:** blank endpapers/autograph pages (Jacobs 2–4, 181–183; Crown 2–4, 168–173).
 
 The owner deferred to engineering judgment on every issue flagged in the Phase 1 plan (“do not build to spec if you find a better way”). In effect:
@@ -98,11 +99,11 @@ The owner deferred to engineering judgment on every issue flagged in the Phase 1
 
 - Next.js 16: middleware is `proxy.ts`. Read `node_modules/next/dist/docs/` before using unfamiliar APIs.
 - Domain: **crownjacobs77.com** (registered at Cloudflare; DNS in Cloudflare zone `2b56fbdcd38de5df3d9a7d06aaf6dc1a`). `SITE_URL` in `lib/site.ts`. Vercel project `prj_ocpbHF5JKZJUq5uWB0Y7YkN3TM60` (team `team_O4ABC8YJQOXF48wCGbFEs4TG`), production branch = this working branch. `vercel.json` pins `"framework": "nextjs"` (the project had been created as "Other", which served 404s). Vercel currently redirects apex → www; owner to flip so www → apex (canonical is the apex).
-- Vercel env set 2026-09-30: SITE_STAGE=preview, SITE_PASSCODE, SITE_GATE_SECRET, NEXT_PUBLIC_SITE_URL, SUPABASE_URL, REVALIDATE_SECRET, CRON_SECRET, EMAIL_FROM. **Still missing:** SUPABASE_ANON_KEY, SUPABASE_SERVICE_ROLE_KEY (owner copies from Supabase), RESEND_API_KEY (domain not yet verified in Resend), Turnstile keys.
+- Vercel env set 2026-09-30: SITE_STAGE=preview, SITE_PASSCODE, SITE_GATE_SECRET, NEXT_PUBLIC_SITE_URL, SUPABASE_URL, REVALIDATE_SECRET, CRON_SECRET, EMAIL_FROM. Owner added SUPABASE_ANON_KEY and SUPABASE_SERVICE_ROLE_KEY on 2026-10-01 (env changes only apply to a new deployment). **Still missing:** RESEND_API_KEY (crownjacobs77.com not yet added/verified in Resend). Turnstile no longer used.
 - Production Supabase (`dbaoigdmkfzkxwvzifmq`, us-east-2): four migrations + `seed.sql` applied 2026-09-30 via the Management API (recorded in `supabase_migrations.schema_migrations`); 14 tables, all RLS. Security advisor warnings for anon-executable `is_admin()` / `event_availability()` are by design. Tokens are read from environment variables (`SUPABASE_ACCESS_TOKEN`, `VERCEL_TOKEN`, `CLOUDFLARE_API_TOKEN` (account token, `cfat_`), `RESEND_API_KEY` (send-only)), never pasted into chat or committed.
 - Yearbook pipeline: `npm run yearbook:ingest` (needs `tesseract`; writes `.yearbook-build/`) → `npm run yearbook:roster` → load `.yearbook-build/yearbook.sql` and `roster.sql` into the DB (idempotent) → `npm run yearbook:deploy` (wrangler; `CLOUDFLARE_ACCOUNT_ID=18ae2306c368db82268cdf1f0f59d2c3`). Worker: `crownjacobs77-yearbooks.bzzyz9ftym.workers.dev`; `YEARBOOK_SIGNING_SECRET` is the same in Vercel and the Worker (wrangler secret). Locally/tests: `npm run yearbook:cdn-dev` (same check; Chromium here can’t reach the real Worker through the sandbox proxy).
 - Tests: `tests/global-setup.ts` loads 3 grey test pages + roster names Donna Coleman (Crown) / Lynn Bye (Jacobs) only when the DB has no yearbook data (CI); with real data ingested locally the same tests pass. Playwright starts the dev CDN and blanks `RESEND_API_KEY`.
-- Yearbook scans: private repo `ddoerrfeld/crownjacobs77-yearbooks` → `/home/user/crownjacobs77-yearbooks` (`add_repo` access: push). **Never copy scans into this repo.** Single pages, 1100 px wide JPEG. Jacobs (“Eyrie 1977”): 184 files; 1 front cover, 2–4 & 181–183 endpapers, 184 back cover, seniors 112–123, period HDJ mark on 179. Crown (“People”, Viking cover art): 174 files; 1 front cover, 2–3 endpapers, 4 blank, 168–173 blank, 174 back cover, seniors 88–103. Contact sheets sent to owner 2026-09-30, awaiting approval.
+- Yearbook scans: private repo `ddoerrfeld/crownjacobs77-yearbooks` → `/home/user/crownjacobs77-yearbooks` (`add_repo` access: push). **Never copy scans into this repo.** Single pages, 1100 px wide JPEG. Jacobs (“Eyrie 1977”): 184 files; 1 front cover, 2–4 & 181–183 endpapers, 184 back cover, seniors 112–123, period HDJ mark on 179. Crown (“People”, Viking cover art): 174 files; 1 front cover, 2–3 endpapers, 4 blank, 168–173 blank, 174 back cover, seniors 88–103. Contact sheets approved 2026-09-30.
 - Data: `lib/data/*.ts` is the only data-access layer (Supabase via `lib/supabase/server.ts`). Seed facts live in `lib/content/*-seed.ts`; `supabase/seed.sql` is generated from them (CI fails if stale).
 - Local DB: `npm run db:start` (Docker). If Docker isn’t running in a cloud session: `sudo dockerd &` first. Tests mutate the local DB via `psql` (`tests/db.ts`) and restore it.
 - After changing migrations: `npm run db:reset && npm run db:types`.
