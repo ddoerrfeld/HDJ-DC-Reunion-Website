@@ -9,6 +9,7 @@ import type { FormItem, FormState, SelectionState } from "@/lib/rsvp/form-model"
 import { emptySelection } from "@/lib/rsvp/form-model";
 import type { GradSchool } from "@/lib/rsvp/schema";
 import { ThenPreview } from "./SeeMePicker";
+import { formatDisplayName } from "@/lib/names";
 
 type Errors = Record<string, string>;
 
@@ -381,11 +382,7 @@ const SCHOOL_LABEL: Record<GradSchool, string> = {
 };
 
 export function displayName(person: FormState["person"]): string {
-  const nick = person.nickname.trim() ? ` “${person.nickname.trim()}”` : "";
-  const last = person.nameChanged && person.currentLastName.trim()
-    ? `(${person.hsLastName.trim()}) ${person.currentLastName.trim()}`
-    : person.hsLastName.trim();
-  return `${person.firstName.trim()}${nick} ${last}`;
+  return formatDisplayName({ ...person, currentLastName: person.nameChanged ? person.currentLastName : null });
 }
 
 export function ReviewStep({

@@ -7,9 +7,18 @@ import { ComingSoonCard } from "@/components/ui/ComingSoonCard";
 import { getFeatureFlags } from "@/lib/data/settings";
 import { getYearbook, isYearbookSchool, SCHOOL_NAMES } from "@/lib/data/yearbooks";
 import { hasYearbookAccess } from "@/lib/yearbook/access";
+import { YearbookCropSchema, type YearbookCrop } from "@/lib/yearbook/crop";
 
 // Signed image URLs and the section gate depend on the request.
 export const dynamic = "force-dynamic";
+
+/** `hl=x,y,w,h` (0–1) from a "See me in ’77" link. */
+function parseHighlight(value: string | undefined): YearbookCrop | null {
+  if (!value) return null;
+  const [x, y, w, h] = value.split(",").map(Number);
+  const parsed = YearbookCropSchema.safeParse({ x, y, w, h });
+  return parsed.success ? parsed.data : null;
+}
 
 type Props = {
   params: Promise<{ school: string }>;
@@ -29,7 +38,7 @@ export default async function YearbookPage({ params, searchParams }: Props) {
   const page = Number.parseInt(query.page ?? "1", 10);
 
   if (!(await hasYearbookAccess())) {
-    const next = `/yearbooks/${school}${Number.isFinite(page) && page > 1 ? `?page=${page}` : ""}`;
+    const next = `/yearbooks/${school}${Number.isFinite(page) && page > 1 ? `?page=${page}${query.hl ? `&hl=${query.hl}` : ""}` : ""}`;
     redirect(`/yearbooks?next=${encodeURIComponent(next)}`);
   }
 
@@ -53,6 +62,7 @@ export default async function YearbookPage({ params, searchParams }: Props) {
     <YearbookReader
       book={book}
       initialPage={Number.isFinite(page) ? page : 1}
+      highlight={parseHighlight(query.hl)}
       searchEnabled={flags.yearbookOcr}
       header={
         <div className="flex items-center justify-between gap-x-4 border-b border-line bg-paper px-4 py-2">

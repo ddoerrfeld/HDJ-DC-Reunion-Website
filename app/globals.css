@@ -312,3 +312,28 @@
 @media (prefers-reduced-motion: reduce) {
   .yb-slide-from-right, .yb-slide-from-left { animation: none; }
 }
+
+/* Who's Coming: Then & Now card flip (SPEC §10.4). Cross-fade under reduced motion. */
+.dir-flip {
+  transform-style: preserve-3d;
+  transition: transform 560ms var(--ease-out);
+}
+.dir-flip.is-flipped { transform: rotateY(180deg); }
+.dir-face { backface-visibility: hidden; }
+.dir-back { transform: rotateY(180deg); }
+@media (prefers-reduced-motion: reduce) {
+  .dir-flip, .dir-flip.is-flipped { transform: none; transition: none; }
+  .dir-face { backface-visibility: visible; transition: opacity 200ms linear; }
+  .dir-back { transform: none; opacity: 0; }
+  .dir-flip.is-flipped .dir-back { opacity: 1; }
+}
+
+/* Reader: "See me in ’77" outline, fades after 2 s. */
+@keyframes yb-highlight {
+  0%, 70% { opacity: 1; }
+  100% { opacity: 0; }
+}
+.yb-highlight { animation: yb-highlight 2.6s var(--ease-out) forwards; }
+@media (prefers-reduced-motion: reduce) {
+  .yb-highlight { animation-duration: 4s; }
+}

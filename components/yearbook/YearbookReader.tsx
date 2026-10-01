@@ -13,6 +13,7 @@ import {
   ZoomIn,
 } from "lucide-react";
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore, useTransition } from "react";
+import type { YearbookCrop } from "@/lib/yearbook/crop";
 import type { ReaderBook } from "@/lib/yearbook/types";
 import { searchYearbookAction } from "@/app/(site)/yearbooks/actions";
 import type { YearbookSearchHit } from "@/lib/data/yearbooks";
@@ -26,6 +27,8 @@ interface YearbookReaderProps {
   /** Title bar above the book (server-rendered). */
   header?: React.ReactNode;
   initialPage: number;
+  /** Crop to outline on the initial page ("See me in ’77" links). */
+  highlight?: YearbookCrop | null;
   searchEnabled: boolean;
 }
 
@@ -53,7 +56,7 @@ function subscribeFullscreen(onChange: () => void) {
 }
 
 /** The flip-book reader (SPEC §10.3). */
-export function YearbookReader({ book, header, initialPage, searchEnabled }: YearbookReaderProps) {
+export function YearbookReader({ book, header, initialPage, highlight, searchEnabled }: YearbookReaderProps) {
   const { pages } = book;
   const count = pages.length;
   const spreads = useMemo(() => buildSpreads(count), [count]);
@@ -296,6 +299,7 @@ export function YearbookReader({ book, header, initialPage, searchEnabled }: Yea
           <div ref={stageRef} className="relative flex min-h-0 flex-1 items-center justify-center overflow-hidden">
             {pageHeight > 0 ? (
               <BookStage
+                highlight={highlight ? { index: Math.min(Math.max(initialPage, 1), count) - 1, crop: highlight } : null}
                 mode={mode}
                 pages={pages}
                 spreads={spreads}

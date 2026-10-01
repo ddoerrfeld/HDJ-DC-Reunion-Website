@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
+import type { YearbookCrop } from "@/lib/yearbook/crop";
 import type { ReaderPage } from "@/lib/yearbook/types";
 import { PageImage } from "./PageImage";
 import type { Spread } from "./spreads";
@@ -15,6 +16,8 @@ export interface Turn {
 }
 
 interface BookStageProps {
+  /** Page index + crop to outline once (from a "See me in ’77" link). */
+  highlight?: { index: number; crop: YearbookCrop } | null;
   mode: "spread" | "single";
   pages: ReaderPage[];
   spreads: Spread[];
@@ -36,10 +39,22 @@ interface BookStageProps {
 
 const DRAG_THRESHOLD = 8;
 
-function Face({ page, alt, side }: { page: ReaderPage | null; alt: string; side: "left" | "right" }) {
+/** "See me in ’77": a gold outline around a classmate's portrait that fades after ~2 s. */
+function HighlightBox({ crop }: { crop: YearbookCrop }) {
+  return (
+    <div
+      aria-hidden="true"
+      className="yb-highlight pointer-events-none absolute rounded-sm outline-4 outline-seam-gold [box-shadow:0_0_0_3px_var(--ink),0_0_24px_6px_rgb(232_163_23/0.55)]"
+      style={{ left: `${crop.x * 100}%`, top: `${crop.y * 100}%`, width: `${crop.w * 100}%`, height: `${crop.h * 100}%` }}
+    />
+  );
+}
+
+function Face({ page, alt, side, highlight }: { page: ReaderPage | null; alt: string; side: "left" | "right"; highlight?: YearbookCrop | null }) {
   return (
     <div className={`relative h-full w-full overflow-hidden bg-paper-raised ${side === "left" ? "rounded-l-sm" : "rounded-r-sm"}`}>
       {page ? <PageImage page={page} alt={alt} eager /> : null}
+      {highlight ? <HighlightBox crop={highlight} /> : null}
       {/* Gutter shadow toward the spine. */}
       <div
         aria-hidden="true"
@@ -126,6 +141,7 @@ export function BookStage(props: BookStageProps) {
           style={dragX ? { transform: `translateX(${dragX}px)`, transition: "none" } : undefined}
         >
           <PageImage page={page} alt={altFor(pageIndex)} eager />
+          {props.highlight?.index === pageIndex && !dragX ? <HighlightBox crop={props.highlight.crop} /> : null}
         </div>
       </div>
     );
@@ -167,7 +183,9 @@ export function BookStage(props: BookStageProps) {
             data-side={side}
             {...(index === null ? {} : pointerHandlers)}
           >
-            {index === null ? null : <Face page={pageAt(index)} alt={altFor(index)} side={side} />}
+            {index === null ? null : (
+              <Face page={pageAt(index)} alt={altFor(index)} side={side} highlight={!turn && props.highlight?.index === index ? props.highlight.crop : null} />
+            )}
           </div>
         );
       })}

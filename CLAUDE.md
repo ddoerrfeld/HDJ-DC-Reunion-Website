@@ -51,7 +51,7 @@ Fonts (via `next/font`): **Graduate** (display, uppercase, +2% tracking, never b
 | 3 — RSVP (no payment) | ✅ Approved by owner (production Supabase, Resend, Turnstile keys not yet connected) |
 | 4 — Payments | ❌ Cancelled by owner — no payment processor. Paid events show a “Payment details coming soon” placeholder. |
 | 5 — Yearbooks | ✅ Approved by owner 2026-10-01. Name search (OCR) turned on. School marks: Jacobs 1977 HDJ mark + original Crown helmet (owner deferred to judgment). |
-| 6 — Directory | Not started |
+| 6 — Directory | Built — awaiting owner approval (2026-10-01). |
 | 7 — Admin | Not started |
 | 8 — Hardening & Launch | Not started |
 
@@ -67,6 +67,10 @@ Fonts (via `next/font`): **Graduate** (display, uppercase, +2% tracking, never b
 - **Page numbers = position among visible pages** (cover = 1); `?page=N` uses it. Printed page labels are editable later (admin).
 - **See Me in ’77 crops are 4:5** (512×640 WebP/JPEG + 160×200), rendered on RSVP save from the yearbook asset (no orphan files). The picker opens on the page where the roster found the person’s name; tap your portrait → pre-zoomed crop.
 - **School marks (decided):** Jacobs uses the 1977 interlocked HDJ mark traced from the Eyrie (`JacobsMark1977`), not the modern “J” logo; Crown uses the original Viking helmet (`CrownVikingMark`) since the Valhallan has no emblem. Use them for school badges from Phase 6 on.
+- **Directory data = SECURITY DEFINER functions, not a view** (`directory_entries()`, `directory_unlisted_count()`): a view over `attendees` would bypass RLS (Supabase flags it as an error). Same contract as SPEC §9.1 — only public columns; anon has no access to `attendees`. Listed: active, `show_in_directory`, and not `pending` classmate review. “Recently RSVP’d” uses a rank, never a timestamp. The summary adds “Plus N more coming who aren’t listed” (a count only).
+- **Who’s Coming uses the yearbook section gate** (classmate check) at launch, as SPEC §12.1 groups them; preview stays open. Home teaser shows the live count and the 8 most recent photos without names.
+- **Directory filtering is client-side** over the (small) public list, with all filter state in the URL (`q, school, acts, match, days, photo, then, sort`).
+- **Event websites:** `event_items.website_url` (owner request) → “<venue> website” button on event cards.
 - **Hidden pages:** blank endpapers/autograph pages (Jacobs 2–4, 181–183; Crown 2–4, 168–173).
 
 The owner deferred to engineering judgment on every issue flagged in the Phase 1 plan (“do not build to spec if you find a better way”). In effect:

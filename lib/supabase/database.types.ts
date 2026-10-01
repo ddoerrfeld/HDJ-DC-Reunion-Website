@@ -290,7 +290,15 @@ isOneToOne: false
             [_ in never]: never
           }
           Functions: {
-            "event_availability":
+            "directory_entries":
+{ Args: Record<PropertyKey, never>; Returns: {
+              "activities": Json,"current_last_name": string,"first_name": string,"grad_school": Database["public"]['Enums']["grad_school"],"hs_last_name": string,"id": string,"nickname": string,"photo_path": string,"recent_rank": number,"then_photo_path": string,"yearbook_crop": Json,"yearbook_page_number": number,"yearbook_school": Database["public"]['Enums']["yearbook_school"]
+            }[]
+                           },
+"directory_unlisted_count":
+{ Args: Record<PropertyKey, never>; Returns: number
+                           },
+"event_availability":
 { Args: Record<PropertyKey, never>; Returns: {
               "capacity": number,"slug": string,"taken": number
             }[]

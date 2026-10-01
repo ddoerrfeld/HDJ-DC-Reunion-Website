@@ -5,7 +5,7 @@
  */
 import { test } from "@playwright/test";
 import { confirmationEmail, editLinkEmail } from "../lib/email/templates";
-import { revalidate, setLodging, sql } from "./db";
+import { clearDirectory, revalidate, seedDirectory, setLodging, sql } from "./db";
 import { unlock } from "./helpers";
 
 const OUT = `screenshots/${process.env.SHOT_DIR ?? "phase-3"}`;
@@ -205,6 +205,34 @@ for (const size of SIZES) {
       await page.goto(`/rsvp/approve/${id}?s=${sig}`);
       await shot("organizer-approve");
       sql(`delete from public.attendees where email = '${email}'`);
+    });
+
+    test("phase 6 directory", async ({ page }) => {
+      test.setTimeout(120_000);
+      const shot = (name: string, fullPage = true) => page.screenshot({ path: `${OUT}/${name}-${size.name}.png`, fullPage });
+      await seedDirectory();
+      try {
+        await unlock(page, "/whos-coming");
+        await page.evaluate(() => document.fonts.ready);
+        await shot("whos-coming");
+        const filters = page.getByRole("button", { name: /^Filters/ });
+        if (await filters.isVisible()) {
+          await filters.click();
+          await shot("whos-coming-filters-open");
+        }
+        await page.goto("/whos-coming?q=tess");
+        await page.getByRole("button", { name: /Show the ’77 photo/ }).click();
+        await page.waitForTimeout(700);
+        await shot("whos-coming-flipped");
+        await page.goto("/whos-coming?acts=sat-golf,fri-pregame&match=all");
+        await shot("whos-coming-empty");
+        await page.goto("/");
+        await page.locator("#whos-coming-title").scrollIntoViewIfNeeded();
+        await page.waitForTimeout(300);
+        await shot("home-whos-coming-teaser", false);
+      } finally {
+        clearDirectory();
+      }
     });
 
     test("mobile menu", async ({ page }) => {

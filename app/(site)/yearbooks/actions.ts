@@ -23,14 +23,16 @@ export async function searchYearbookAction(school: string, query: string): Promi
 export async function verifyClassmateAction(formData: FormData): Promise<void> {
   const first = String(formData.get("firstName") ?? "").trim().slice(0, 60);
   const last = String(formData.get("lastName") ?? "").trim().slice(0, 60);
-  const next = safeNextPath(String(formData.get("next") ?? "/yearbooks"));
-  if (!first || !last) redirect(`/yearbooks?verify=missing&next=${encodeURIComponent(next)}`);
+  const back = formData.get("back") === "/whos-coming" ? "/whos-coming" : "/yearbooks";
+  const next = safeNextPath(String(formData.get("next") ?? back));
+  const retry = (reason: string) => redirect(`${back}?verify=${reason}&next=${encodeURIComponent(next)}`);
+  if (!first || !last) retry("missing");
 
   const ip = (await headers()).get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
-  if (!(await rateLimit(`classmate-check:${ip}`, 10, 60 * 60))) redirect(`/yearbooks?verify=limit&next=${encodeURIComponent(next)}`);
+  if (!(await rateLimit(`classmate-check:${ip}`, 10, 60 * 60))) retry("limit");
 
   const match = await findClassmate({ firstName: first, hsLastName: last });
-  if (!match) redirect(`/yearbooks?verify=nomatch&next=${encodeURIComponent(next)}`);
+  if (!match) retry("nomatch");
   await grantYearbookAccess();
-  redirect(next.startsWith("/yearbooks") ? next : "/yearbooks");
+  redirect(next.startsWith("/yearbooks") || next.startsWith("/whos-coming") ? next : back);
 }
