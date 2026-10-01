@@ -16,7 +16,7 @@ export function WhosComingTeaser() {
           <SectionHeading eyebrow="Who’s coming" title="Be the first name on the list" id="whos-coming-title">
             <p>
               As classmates RSVP, their photos fill this space — Crown grads in blue, Jacobs grads in
-              gold. RSVPs open soon.
+              gold. RSVPs are open — add yours.
             </p>
           </SectionHeading>
           <div>
