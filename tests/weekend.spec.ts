@@ -87,6 +87,17 @@ test.describe("/weekend renders from the database (SPEC §15 Phase 2)", () => {
     expect(decodeURIComponent(href!)).toContain("2601 Bunker Hill Dr, Algonquin, IL 60102");
   });
 
+  test("golf and pickleball link to the venues' own websites", async ({ page }) => {
+    const golf = page.locator("#sat-golf").getByRole("link", { name: /Randall Oaks Golf Club website/ });
+    await expect(golf).toHaveAttribute("href", "https://randalloaksgc.com/");
+    await expect(golf).toHaveAttribute("target", "_blank");
+    await expect(golf).toContainText("opens in a new tab");
+    const pickle = page.locator("#sat-pickleball").getByRole("link", { name: /website/ });
+    await expect(pickle).toHaveAttribute("href", "https://picklehaus.com/");
+    // Events without a website show no website link.
+    await expect(page.locator("#sat-dinner").getByRole("link", { name: /website/ })).toHaveCount(0);
+  });
+
   test("publishes schema.org Event data for scheduled items", async ({ page }) => {
     const json = await page.locator('script[type="application/ld+json"]').textContent();
     const events = JSON.parse(json!) as Array<{ "@type": string; startDate: string }>;

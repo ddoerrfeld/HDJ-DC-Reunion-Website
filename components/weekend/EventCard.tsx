@@ -1,4 +1,4 @@
-import { CalendarPlus, Clock3, MapPin } from "lucide-react";
+import { CalendarPlus, Clock3, Globe, MapPin } from "lucide-react";
 import { Badge, ToBeConfirmed } from "@/components/ui/Badge";
 import { buttonClasses } from "@/components/ui/Button";
 import { Markdown } from "@/components/ui/Markdown";
@@ -18,7 +18,7 @@ export function PriceBadge({ item }: { item: EventItem }) {
 const actionClass = buttonClasses("secondary", false, "min-h-12 px-4 py-2 text-body");
 
 export function EventActions({ item }: { item: EventItem }) {
-  if (!item.startsAt && !item.address) return null;
+  if (!item.startsAt && !item.address && !item.websiteUrl) return null;
   return (
     <div className="flex flex-wrap gap-3">
       {item.startsAt ? (
@@ -33,6 +33,13 @@ export function EventActions({ item }: { item: EventItem }) {
           <MapPin size={20} strokeWidth={1.75} aria-hidden="true" />
           Map
           <span className="visually-hidden">: {item.locationName ?? item.address} (opens Google Maps in a new tab)</span>
+        </a>
+      ) : null}
+      {item.websiteUrl ? (
+        <a href={item.websiteUrl} target="_blank" rel="noopener noreferrer" className={actionClass}>
+          <Globe size={20} strokeWidth={1.75} aria-hidden="true" />
+          {item.locationName ? `${item.locationName} website` : "Venue website"}
+          <span className="visually-hidden"> (opens in a new tab)</span>
         </a>
       ) : null}
     </div>

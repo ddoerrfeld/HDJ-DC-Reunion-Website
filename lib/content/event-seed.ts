@@ -27,6 +27,8 @@ export interface EventItem {
   confirmed: boolean;
   /** Replaces the generic "To be confirmed" tag while confirmed = false. */
   unconfirmedNote: string | null;
+  /** The venue's own website, for classmates who don't know the place. */
+  websiteUrl: string | null;
   halftimeEligible: boolean;
   visible: boolean;
   sort: number;
@@ -55,6 +57,7 @@ export const EVENT_ITEMS_SEED: readonly EventItem[] = [
     capacity: null,
     confirmed: true,
     unconfirmedNote: null,
+    websiteUrl: null,
     halftimeEligible: false,
     visible: true,
     sort: 10,
@@ -76,6 +79,7 @@ export const EVENT_ITEMS_SEED: readonly EventItem[] = [
     capacity: null,
     confirmed: true,
     unconfirmedNote: null,
+    websiteUrl: null,
     halftimeEligible: false,
     visible: true,
     sort: 20,
@@ -98,6 +102,7 @@ export const EVENT_ITEMS_SEED: readonly EventItem[] = [
     capacity: null,
     confirmed: true,
     unconfirmedNote: null,
+    websiteUrl: null,
     halftimeEligible: false,
     visible: true,
     sort: 30,
@@ -119,6 +124,7 @@ export const EVENT_ITEMS_SEED: readonly EventItem[] = [
     capacity: null,
     confirmed: false, // 2027 football schedule not yet confirmed by the schools
     unconfirmedNote: "Schedule to be confirmed by the schools",
+    websiteUrl: null,
     halftimeEligible: true,
     visible: true,
     sort: 40,
@@ -140,6 +146,7 @@ export const EVENT_ITEMS_SEED: readonly EventItem[] = [
     capacity: null,
     confirmed: false,
     unconfirmedNote: "Schedule to be confirmed by the schools",
+    websiteUrl: null,
     halftimeEligible: true,
     visible: true,
     sort: 50,
@@ -161,6 +168,7 @@ export const EVENT_ITEMS_SEED: readonly EventItem[] = [
     capacity: null,
     confirmed: true,
     unconfirmedNote: null,
+    websiteUrl: "https://randalloaksgc.com/",
     halftimeEligible: false,
     visible: true,
     sort: 60,
@@ -182,6 +190,7 @@ export const EVENT_ITEMS_SEED: readonly EventItem[] = [
     capacity: null,
     confirmed: true,
     unconfirmedNote: null,
+    websiteUrl: "https://picklehaus.com/",
     halftimeEligible: false,
     visible: true,
     sort: 70,
@@ -203,6 +212,7 @@ export const EVENT_ITEMS_SEED: readonly EventItem[] = [
     capacity: null,
     confirmed: false, // venue identity pending organizer confirmation
     unconfirmedNote: "Venue to be confirmed",
+    websiteUrl: null,
     halftimeEligible: false,
     visible: true,
     sort: 80,
@@ -224,6 +234,7 @@ export const EVENT_ITEMS_SEED: readonly EventItem[] = [
     capacity: null,
     confirmed: false,
     unconfirmedNote: null,
+    websiteUrl: null,
     halftimeEligible: false,
     visible: true,
     sort: 90,

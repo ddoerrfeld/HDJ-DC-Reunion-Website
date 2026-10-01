@@ -18,14 +18,14 @@ const lit = (v: string | number | boolean | null): string => {
 const eventColumns = [
   "slug", "day", "starts_at", "ends_at", "title", "description_md", "location_name", "address",
   "address_confirmed", "choice_group", "requires_payment", "price_cents", "allows_guests", "capacity",
-  "confirmed", "unconfirmed_note", "halftime_eligible", "visible", "sort",
+  "confirmed", "unconfirmed_note", "website_url", "halftime_eligible", "visible", "sort",
 ];
 
 const eventRows = EVENT_ITEMS_SEED.map((e) =>
   [
     e.slug, e.day, e.startsAt, e.endsAt, e.title, e.descriptionMd, e.locationName, e.address,
     e.addressConfirmed, e.choiceGroup, e.requiresPayment, e.priceCents, e.allowsGuests, e.capacity,
-    e.confirmed, e.unconfirmedNote, e.halftimeEligible, e.visible, e.sort,
+    e.confirmed, e.unconfirmedNote, e.websiteUrl, e.halftimeEligible, e.visible, e.sort,
   ]
     .map(lit)
     .join(", "),

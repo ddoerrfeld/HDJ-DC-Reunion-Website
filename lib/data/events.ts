@@ -33,6 +33,7 @@ function fromRow(row: EventRow): EventItem {
     capacity: row.capacity,
     confirmed: row.confirmed,
     unconfirmedNote: row.unconfirmed_note,
+    websiteUrl: row.website_url,
     halftimeEligible: row.halftime_eligible,
     visible: row.visible,
     sort: row.sort,
