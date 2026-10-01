@@ -199,7 +199,7 @@ Both schools occupy the same buildings and addresses they did in 1977 — use th
 | Fri Oct 8 | 7:00 PM | Football: Jacobs vs. Prairie Ridge | Jacobs High School | 2601 Bunker Hill Dr, Algonquin, IL 60102 | `fri_game` | No | Halftime recognition of the class |
 | Fri Oct 8 | 7:00 PM | Football: Dundee-Crown vs. Crystal Lake South | Dundee-Crown High School | 1500 Kings Rd, Carpentersville, IL 60110 | `fri_game` | No | Halftime recognition of the class |
 | Sat Oct 9 | 11:00 AM–3:00 PM | Golf | Randall Oaks Golf Club | 4101 Binnie Rd, West Dundee, IL 60118 | `sat_day` | **TBD** | `requires_payment=false`, `price_cents=null` until set |
-| Sat Oct 9 | 11:00 AM–3:00 PM | Pickleball & Social | Pickle Haüs | 1621 S Randall Rd, Algonquin, IL 60102 | `sat_day` | **TBD** | Same as golf. Venue name is styled "Pickle Haüs." |
+| Sat Oct 9 | 11:00 AM–3:00 PM | Pickleball & Social | Pickle Haus | 1621 S Randall Rd, Algonquin, IL 60102 | `sat_day` | **TBD** | Same as golf. Venue name is "Pickle Haus" — no umlaut (owner correction 2026-10-01; matches the venue’s own branding). |
 | Sat Oct 9 | 6:30–10:30 PM | Reunion Dinner | West Dundee VFW Post 2298 | 117 S 1st St, West Dundee, IL 60118 | — | **Yes** | Price TBD; cash bar. Venue identity pending organizer confirmation (flag `confirmed=false`). |
 | Sun Oct 10 | TBD | Farewell Breakfast/Brunch | TBD | TBD | — | No | Designed "Location coming soon" placeholder |
 

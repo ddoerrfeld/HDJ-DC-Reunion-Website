@@ -11,7 +11,7 @@
 3. **High-end finish** (SPEC §4.7) applies to every phase. Everything draws from `/styleguide`. One button style per role, one card, one photo frame, Lucide icons at 1.75 stroke.
 4. **Audience is ~68 years old.** Accessibility is a hard requirement (SPEC §4.5): 18 px base, 48 px tap targets, visible labels, no hover-only UI, WCAG 2.2 AA, axe clean. Test at 375 px and 200% zoom.
 5. **No fake yearbook pages.** At Phase 5, stop and request files from the owner using the SPEC §10.1 checklist. Max 3 grey test images.
-6. **Corrected spellings:** Prairie Ridge, Dundee-Crown, Crystal Lake South, Randall Oaks, Pickleball, Pickle Haüs.
+6. **Corrected spellings:** Prairie Ridge, Dundee-Crown, Crystal Lake South, Randall Oaks, Pickleball, Pickle Haus.
 7. **Event:** Fri Oct 8 – Sun Oct 10, 2027. All times `America/Chicago`.
 8. **Site is passcode-gated** in preview (SPEC §12.1, Stage A).
 9. **TypeScript strict.** No `any` without an explaining comment. Commit at end of each phase.

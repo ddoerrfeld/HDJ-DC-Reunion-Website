@@ -180,7 +180,7 @@ export const EVENT_ITEMS_SEED: readonly EventItem[] = [
     endsAt: "2027-10-09T15:00:00-05:00",
     title: "Pickleball & Social",
     descriptionMd: "",
-    locationName: "Pickle Haüs",
+    locationName: "Pickle Haus",
     address: "1621 S Randall Rd, Algonquin, IL 60102",
     addressConfirmed: true,
     choiceGroup: "sat_day",
