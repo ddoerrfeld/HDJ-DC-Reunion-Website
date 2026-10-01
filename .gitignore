@@ -49,3 +49,4 @@ next-env.d.ts
 # yearbook ingest output (scans never enter this repo)
 /.yearbook-build/
 .wrangler/
+*.tmp.mjs
