@@ -1,3 +1,5 @@
+import { Markdown } from "@/components/ui/Markdown";
+import { getSiteText } from "@/lib/data/settings";
 import { ButtonLink } from "@/components/ui/Button";
 import { PhotoFrame, type School } from "@/components/ui/PhotoFrame";
 import { SectionHeading } from "@/components/ui/SectionHeading";
@@ -11,6 +13,7 @@ const FRAMES: School[] = ["crown", "jacobs", "crown", "jacobs", "jacobs", "crown
  */
 export async function WhosComingTeaser() {
   // SPEC §5: live count + the 8 most recent photos. Photos only — no names on the public home page.
+  const t = await getSiteText();
   const directory = await getDirectory({ includeThen: false }).catch(() => null);
   const count = (directory?.people.length ?? 0) + (directory?.unlisted ?? 0);
   const recent = (directory?.people ?? [])
@@ -27,10 +30,7 @@ export async function WhosComingTeaser() {
             title={count > 0 ? `${count} ${count === 1 ? "classmate is" : "classmates are"} coming` : "Be the first name on the list"}
             id="whos-coming-title"
           >
-            <p>
-              As classmates RSVP, their photos fill this space — Crown grads in blue, Jacobs grads in
-              gold. RSVPs are open — add yours.
-            </p>
+            <Markdown>{t["home.whos_coming_text"]}</Markdown>
           </SectionHeading>
           <div>
             <ButtonLink href="/whos-coming" variant="secondary">

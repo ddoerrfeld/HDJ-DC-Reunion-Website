@@ -1,10 +1,11 @@
+import { Markdown } from "@/components/ui/Markdown";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { SeamRule } from "@/components/brand/Seam";
 import { ComingSoonCard } from "@/components/ui/ComingSoonCard";
 import { PhotoFrame } from "@/components/ui/PhotoFrame";
 import { getMemoriam } from "@/lib/data/memoriam";
-import { getFeatureFlags } from "@/lib/data/settings";
+import { getFeatureFlags, getSiteText } from "@/lib/data/settings";
 
 export const metadata: Metadata = { title: "In Memoriam" };
 export const revalidate = 60;
@@ -14,14 +15,14 @@ const SCHOOL = { crown: "Crown ’77", jacobs: "Jacobs ’77", other: "Class of 
 /** SPEC §2/§11: classmates we've lost. Admin-entered only, no public submissions. Quiet by design: no motion, no color blocks. */
 export default async function InMemoriamPage() {
   if (!(await getFeatureFlags()).inMemoriam) notFound();
-  const people = await getMemoriam();
+  const [people, t] = await Promise.all([getMemoriam(), getSiteText()]);
   return (
     <div className="container-page py-16 md:py-20">
       <header className="flex flex-col gap-3">
         <p className="type-eyebrow text-crown-blue-deep">Remembering</p>
         <h1 className="type-display text-h1 text-ink md:text-display">In Memoriam</h1>
         <SeamRule className="w-full max-w-72" />
-        <p className="measure text-lead text-ink">Classmates we’ve lost, and remember fondly.</p>
+        <Markdown className="measure text-lead text-ink">{t["memoriam.intro"]}</Markdown>
       </header>
       {people.length === 0 ? (
         <div className="mt-10 max-w-2xl">

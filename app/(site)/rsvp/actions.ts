@@ -5,7 +5,7 @@ import { redirect } from "next/navigation";
 import { getEventItems, type EventItem } from "@/lib/data/events";
 import { yearbooksReady } from "@/lib/data/yearbooks";
 import { getRsvpByToken, isPastDeadline, summaryLines, type SavedRsvp } from "@/lib/data/rsvp";
-import { getPublicSettings } from "@/lib/data/settings";
+import { getPublicSettings, getSiteText } from "@/lib/data/settings";
 import { sendEmail } from "@/lib/email/send";
 import { confirmationEmail } from "@/lib/email/templates";
 import { buildCalendar } from "@/lib/ics";
@@ -141,8 +141,9 @@ async function setRsvpCookie(token: string) {
 
 async function sendConfirmation(saved: SavedRsvp, token: string, items: EventItem[], updated: boolean, classmate: ClassmateStatus) {
   const lines = summaryLines(saved.registrations, items);
-  const { organizerContactEmail } = await getPublicSettings();
+  const [{ organizerContactEmail }, t] = await Promise.all([getPublicSettings(), getSiteText()]);
   const email = confirmationEmail({
+    note: t["email.confirmation_note"],
     firstName: saved.person.firstName,
     editUrl: `${SITE_URL}/rsvp/edit/${token}`,
     lines,

@@ -174,8 +174,8 @@ export function WeekendStep({
       <div className="ml-4 border-l-4 border-seam-gold pl-4">
         <ChoiceCard
           type="checkbox"
-          label="I plan to walk onto the field at halftime to be recognized."
-          description="This helps the organizers plan with the school."
+          label={item.halftimeLabel}
+          description={item.halftimeHint}
           checked={sel(item.slug).halftime}
           onChange={(e) => set(item.slug, { halftime: e.target.checked })}
         />

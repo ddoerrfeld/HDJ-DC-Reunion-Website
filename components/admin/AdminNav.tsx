@@ -7,6 +7,7 @@ export const ADMIN_NAV = [
   { href: "/admin", label: "Dashboard" },
   { href: "/admin/rsvps", label: "RSVPs" },
   { href: "/admin/events", label: "Events" },
+  { href: "/admin/content", label: "Site text" },
   { href: "/admin/photos", label: "Photos" },
   { href: "/admin/exports", label: "Exports" },
   { href: "/admin/yearbooks", label: "Yearbooks" },

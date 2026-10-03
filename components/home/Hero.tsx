@@ -1,9 +1,11 @@
+import { getSiteText } from "@/lib/data/settings";
 import { ArrowRight } from "lucide-react";
 import { ButtonLink } from "@/components/ui/Button";
 import { HeroController } from "./HeroController";
 import "./hero.css";
 
-export function Hero() {
+export async function Hero() {
+  const t = await getSiteText();
   return (
     <section className="hero" aria-labelledby="hero-title">
       <div className="hero-half hero-left halftone">
@@ -25,11 +27,11 @@ export function Hero() {
       </div>
 
       <div className="hero-content">
-        <p className="type-eyebrow text-white">Class of ’77 · 50-Year Reunion</p>
+        <p className="type-eyebrow text-white">{t["home.hero_eyebrow"]}</p>
         <h1 id="hero-title" className="mt-4 max-w-[18ch] text-h2 text-white md:max-w-[22ch] md:text-display">
-          Three years together. One year apart. Fifty years later.
+          {t["home.hero_title"]}
         </h1>
-        <p className="mt-5 text-lead font-semibold text-white">October 8–10, 2027</p>
+        <p className="mt-5 text-lead font-semibold text-white">{t["general.dates"]}</p>
         <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
           <ButtonLink id="hero-rsvp" href="/rsvp" variant="primary">
             RSVP

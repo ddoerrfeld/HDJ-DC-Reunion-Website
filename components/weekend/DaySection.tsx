@@ -8,14 +8,14 @@ export function dayAnchor(day: string): string {
   return formatDayName(day).toLowerCase();
 }
 
-function ChoiceGroup({ items }: { items: EventItem[] }) {
+function ChoiceGroup({ items, label }: { items: EventItem[]; label: string }) {
   const time = formatTimeRange(items[0].startsAt, items[0].endsAt);
   const labelId = `${items[0].choiceGroup}-label`;
   return (
     <div role="group" aria-labelledby={labelId} className="rounded-card border-2 border-dashed border-line-strong/40 p-3 md:p-4">
       <p id={labelId} className="flex flex-wrap items-baseline gap-x-3 px-2 pb-3 pt-1">
         <span className="font-heading text-lead font-bold text-crown-blue-deep tabular-nums">{time ?? "Time coming soon"}</span>
-        <span className="type-eyebrow text-muted">Choose one</span>
+        <span className="type-eyebrow text-muted">{label}</span>
       </p>
       <div className="grid gap-3 md:grid-cols-2 md:gap-4">
         {items.map((item, index) => (
@@ -36,7 +36,7 @@ function ChoiceGroup({ items }: { items: EventItem[] }) {
   );
 }
 
-export function DaySection({ day, items }: EventDay) {
+export function DaySection({ day, items, chooseOneLabel = "Choose one", comingSoonLabel = "Time & place coming soon" }: EventDay & { chooseOneLabel?: string; comingSoonLabel?: string }) {
   const anchor = dayAnchor(day);
   return (
     <section id={anchor} aria-labelledby={`${anchor}-title`} className="scroll-mt-24 py-12 md:py-16">
@@ -48,11 +48,11 @@ export function DaySection({ day, items }: EventDay) {
       <div className="mt-8 flex flex-col gap-6">
         {groupSlots(items).map((slot) => {
           const [first] = slot;
-          if (slot.length > 1) return <ChoiceGroup key={first.slug} items={slot} />;
+          if (slot.length > 1) return <ChoiceGroup key={first.slug} items={slot} label={chooseOneLabel} />;
           if (isPlaceholderItem(first)) {
             return (
               <div key={first.slug} id={first.slug} className="scroll-mt-28">
-                <ComingSoonCard title={first.title} eyebrow="Time & place coming soon">
+                <ComingSoonCard title={first.title} eyebrow={comingSoonLabel}>
                   {first.descriptionMd ? <p>{first.descriptionMd}</p> : null}
                 </ComingSoonCard>
               </div>

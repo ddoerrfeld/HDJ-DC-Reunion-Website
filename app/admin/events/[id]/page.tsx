@@ -53,7 +53,17 @@ export default async function EditEvent({ params, searchParams }: { params: Prom
       <Link href="/admin/events" className={textLink}>
         ← All events
       </Link>
-      <AdminHeader title={isNew ? "Add an event" : e.title}>Times are Chicago time. Leave a field blank to show “Details coming soon” on the site.</AdminHeader>
+      <AdminHeader title={isNew ? "Add an event" : e.title}>
+        Times are Chicago time. Leave a field blank to show “Details coming soon” on the site.
+        {!isNew && e.visible ? (
+          <>
+            {" "}
+            <Link href={`/weekend#${e.slug}`} className="font-semibold text-crown-blue-deep underline">
+              See it on the Weekend page
+            </Link>
+          </>
+        ) : null}
+      </AdminHeader>
       <Notice ok={ok} error={error} />
       <form action={saveEvent} className="flex flex-col gap-8">
         <input type="hidden" name="id" value={e.id} />

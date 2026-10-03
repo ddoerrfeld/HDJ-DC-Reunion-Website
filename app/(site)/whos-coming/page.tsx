@@ -1,3 +1,5 @@
+import { Markdown } from "@/components/ui/Markdown";
+import { getSiteText } from "@/lib/data/settings";
 import type { Metadata } from "next";
 import { SeamRule } from "@/components/brand/Seam";
 import { ClassmateCheck, VERIFY_MESSAGES } from "@/components/classmates/ClassmateCheck";
@@ -13,6 +15,7 @@ export const dynamic = "force-dynamic";
 
 export default async function WhosComingPage({ searchParams }: { searchParams: Promise<Record<string, string | undefined>> }) {
   const params = await searchParams;
+  const t = await getSiteText();
   // Same launch-time rule as the yearbooks (SPEC §12.1): the directory shows who will be away from home.
   const access = await hasYearbookAccess();
   const data = access ? await getDirectory({ includeThen: true }) : null;
@@ -23,10 +26,7 @@ export default async function WhosComingPage({ searchParams }: { searchParams: P
         <p className="type-eyebrow text-crown-blue-deep">Who’s coming</p>
         <h1 className="type-display text-h1 text-ink md:text-display">Who’s coming</h1>
         <SeamRule className="w-full max-w-72" />
-        <p className="measure text-lead text-ink">
-          Find classmates by the name you knew them by — maiden names and nicknames included. Only names, photos,
-          school and chosen events are shown here; email addresses, phone numbers and hometowns stay private.
-        </p>
+        <Markdown className="measure text-lead text-ink">{t["whos.intro"]}</Markdown>
       </header>
       <div className="mt-10">
         {data ? (

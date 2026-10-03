@@ -1,3 +1,5 @@
+import { Markdown } from "@/components/ui/Markdown";
+import { getSiteText } from "@/lib/data/settings";
 import { ArrowRight, MapPin } from "lucide-react";
 import Link from "next/link";
 import { Badge, ToBeConfirmed } from "@/components/ui/Badge";
@@ -46,12 +48,13 @@ function Slot({ slot }: { slot: EventItem[] }) {
 }
 
 export async function WeekendGlance() {
+  const t = await getSiteText();
   const days = await getEventDays();
   return (
     <section aria-labelledby="weekend-title" className="bg-paper-sunk/60 py-16 md:py-24">
       <div className="container-page">
-        <SectionHeading eyebrow="The weekend at a glance" title="Three days, two schools, one class" id="weekend-title">
-          <p>Every event is optional. Pick what suits you when you RSVP.</p>
+        <SectionHeading eyebrow="The weekend at a glance" title={t["home.weekend_title"]} id="weekend-title">
+          <Markdown>{t["home.weekend_text"]}</Markdown>
         </SectionHeading>
 
         <ol className="mt-10 grid gap-6 lg:grid-cols-3">
@@ -75,7 +78,7 @@ export async function WeekendGlance() {
                   <ComingSoonCard
                     key={item.slug}
                     title={item.title}
-                    eyebrow="Time & place coming soon"
+                    eyebrow={t["weekend.coming_soon"]}
                     compact
                     className="mt-5 shadow-none"
                   />

@@ -1,3 +1,5 @@
+import { Markdown } from "@/components/ui/Markdown";
+import { getSiteText } from "@/lib/data/settings";
 import { ButtonLink } from "@/components/ui/Button";
 import { SectionHeading } from "@/components/ui/SectionHeading";
 import { getYearbookCovers } from "@/lib/data/yearbooks";
@@ -38,6 +40,7 @@ function Book({ school, cover }: { school: "crown" | "jacobs"; cover?: string })
 
 export async function YearbookShelf() {
   // The home page must never fail because of the yearbooks.
+  const t = await getSiteText();
   const covers = await getYearbookCovers().catch(() => ({}) as Awaited<ReturnType<typeof getYearbookCovers>>);
   const ready = Boolean(covers.crown && covers.jacobs);
   return (
@@ -48,11 +51,9 @@ export async function YearbookShelf() {
           <Book school="jacobs" cover={covers.jacobs?.display} />
         </div>
         <div className="flex flex-col gap-6">
-          <SectionHeading eyebrow="The yearbooks" title="Both 1977 yearbooks, page by page" id="yearbooks-title">
-            <p>
-              Leaf through the Crown and Jacobs yearbooks, zoom in on every senior portrait, and link
-              your own ’77 photo to your RSVP.{ready ? "" : " The readers open once both books are set up."}
-            </p>
+          <SectionHeading eyebrow="The yearbooks" title={t["home.yearbooks_title"]} id="yearbooks-title">
+            <Markdown>{t["home.yearbooks_text"]}</Markdown>
+            {ready ? null : <p>The readers open once both books are set up.</p>}
           </SectionHeading>
           <div>
             <ButtonLink href="/yearbooks" variant="secondary">

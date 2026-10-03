@@ -1,3 +1,5 @@
+import { Markdown } from "@/components/ui/Markdown";
+import { getSiteText } from "@/lib/data/settings";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { DuotoneBand } from "@/components/brand/DuotoneBand";
@@ -21,6 +23,7 @@ const BOOK_ORDER: YearbookSchool[] = ["crown", "jacobs"];
 
 export default async function YearbooksPage({ searchParams }: { searchParams: Promise<Record<string, string | undefined>> }) {
   const params = await searchParams;
+  const t = await getSiteText();
   const access = await hasYearbookAccess();
   const covers = access ? await getYearbookCovers() : {};
   const ready = BOOK_ORDER.every((s) => covers[s]);
@@ -33,10 +36,7 @@ export default async function YearbooksPage({ searchParams }: { searchParams: Pr
         <p className="type-eyebrow text-crown-blue-deep">The 1977 yearbooks</p>
         <h1 className="type-display text-h1 text-ink md:text-display">Yearbooks</h1>
         <SeamRule className="w-full max-w-72" />
-        <p className="measure text-lead text-ink">
-          Both books, page by page — the Crown <cite className="not-italic">Valhallan</cite> and the Jacobs{" "}
-          <cite className="not-italic">Eyrie</cite>. Zoom in close enough to read every name under every portrait.
-        </p>
+        <Markdown className="measure text-lead text-ink">{t["yearbooks.intro"]}</Markdown>
       </header>
 
       {!access ? (

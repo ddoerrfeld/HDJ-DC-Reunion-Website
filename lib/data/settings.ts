@@ -1,3 +1,5 @@
+import { cache } from "react";
+import { resolveSiteText, type SiteText } from "@/lib/content/site-text";
 import { SETTINGS_SEED } from "@/lib/content/settings-seed";
 import { publicDb } from "@/lib/supabase/server";
 
@@ -59,3 +61,15 @@ export async function getFeatureFlags(): Promise<FeatureFlags> {
   const flags = (value && typeof value === "object" ? value : {}) as Record<string, unknown>;
   return { inMemoriam: flags.in_memoriam === true, faq: flags.faq === true, yearbookOcr: flags.yearbook_ocr === true };
 }
+
+/**
+ * Organizer-edited site copy over the built-in defaults (lib/content/site-text.ts).
+ * Cached per request: many components on one page read it.
+ */
+export const getSiteText = cache(async (): Promise<SiteText> => {
+  const db = publicDb();
+  if (!db) return resolveSiteText(null);
+  const { data, error } = await db.from("settings").select("value").eq("key", "site_text").maybeSingle();
+  if (error) throw new Error(`Failed to load site text: ${error.message}`);
+  return resolveSiteText(data?.value);
+});

@@ -107,8 +107,11 @@ export function confirmationEmail(opts: {
   pendingReview?: boolean;
   /** No yearbook portrait picked yet: invite them back to "See Me in ’77" (SPEC §10.4). */
   inviteSeeMe?: boolean;
+  /** Organizer’s note for every confirmation (Admin → Site text), plain text. */
+  note?: string;
 }): { subject: string; html: string; text: string } {
   const { firstName, editUrl, lines, updated, pendingReview, inviteSeeMe } = opts;
+  const note = opts.note?.trim() ?? "";
   const subject = updated ? "Your Class of ’77 RSVP was updated" : "You’re on the list — Class of ’77 Reunion";
   const intro = updated
     ? `Hi ${firstName}, your RSVP changes are saved. Here’s where things stand:`
@@ -120,6 +123,7 @@ export function confirmationEmail(opts: {
 <p style="margin:0 0 8px 0;">${esc(intro)}</p>
 ${linesHtml(lines)}
 ${pay.html}
+${note ? note.split(/\n\s*\n/).map((p) => `<p style="margin:0 0 16px 0;">${esc(p).replace(/\n/g, "<br>")}</p>`).join("\n") : ""}
 ${pendingReview ? `<p style="margin:0 0 16px 0;padding:16px;background:#E8EEF8;border-left:4px solid ${BLUE_DEEP};">${esc(REVIEW_NOTE)}</p>` : ""}
 <p style="margin:0;">Change your plans, add guests, or update your photo any time:</p>
 ${button(editUrl, "View or change my RSVP")}
@@ -132,7 +136,7 @@ ${inviteSeeMe ? `<p style="margin:0 0 16px 0;"><strong>Find yourself in the ’7
 ${intro}
 
 ${linesText(lines)}
-${pay.text ? `\n${pay.text}\n` : ""}${pendingReview ? `\n${REVIEW_NOTE}\n` : ""}
+${pay.text ? `\n${pay.text}\n` : ""}${note ? `\n${note}\n` : ""}${pendingReview ? `\n${REVIEW_NOTE}\n` : ""}
 View or change your RSVP (private link — please don’t forward):
 ${editUrl}
 ${inviteSeeMe ? "\nFind yourself in the ’77 yearbook: open your link, go to the Photo step, and pick out your senior portrait.\n" : ""}

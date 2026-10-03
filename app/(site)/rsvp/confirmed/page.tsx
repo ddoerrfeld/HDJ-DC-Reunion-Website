@@ -1,3 +1,4 @@
+import { getSiteText } from "@/lib/data/settings";
 import { BedDouble, BookOpen, Hourglass, MailCheck, Pencil } from "lucide-react";
 import type { Metadata } from "next";
 import { cookies } from "next/headers";
@@ -26,7 +27,7 @@ export default async function ConfirmedPage({
   const saved = await getRsvpByToken(token);
   if (!saved || !token) redirect("/rsvp");
   const { updated, email } = await searchParams;
-  const items = await getEventItems();
+  const [items, t] = await Promise.all([getEventItems(), getSiteText()]);
   const lines = summaryLines(saved.registrations, items);
   const paidTitles = items
     .filter((i) => i.requiresPayment && saved.registrations.some((r) => r.slug === i.slug && r.status !== "waitlist"))
@@ -36,7 +37,7 @@ export default async function ConfirmedPage({
     <div className="container-page py-16 md:py-20">
       <ClearDraft />
       <div className="mx-auto flex max-w-3xl flex-col gap-10">
-        <RsvpHeader eyebrow={updated ? "Changes saved" : "You’re on the list"} title={updated ? "RSVP updated" : "See you in October"}>
+        <RsvpHeader eyebrow={updated ? "Changes saved" : "You’re on the list"} title={updated ? "RSVP updated" : t["rsvp.confirmed_title"]}>
           <p>
             {updated ? "Your changes are saved, " : "Thank you, "}
             {saved.person.firstName}.{" "}

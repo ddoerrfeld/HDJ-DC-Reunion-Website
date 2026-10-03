@@ -1,11 +1,11 @@
 import Link from "next/link";
 import { Monogram77 } from "@/components/brand/Monogram77";
 import { SeamBand } from "@/components/brand/Seam";
-import { getPublicSettings } from "@/lib/data/settings";
+import { getPublicSettings, getSiteText } from "@/lib/data/settings";
 import type { NavLink } from "./nav";
 
 export async function Footer({ links }: { links: readonly NavLink[] }) {
-  const { organizerContactEmail } = await getPublicSettings();
+  const [{ organizerContactEmail }, t] = await Promise.all([getPublicSettings(), getSiteText()]);
   return (
     <footer className="mt-auto bg-ink text-paper">
       <SeamBand height={8} />
@@ -15,11 +15,11 @@ export async function Footer({ links }: { links: readonly NavLink[] }) {
             <Monogram77 variant="dark" height={56} />
             <div>
               <p className="type-display text-lead text-white">Class of ’77</p>
-              <p className="text-small text-paper">50-Year Reunion · October 8–10, 2027</p>
+              <p className="text-small text-paper">50-Year Reunion · {t["general.dates"]}</p>
             </div>
           </div>
           <p className="measure text-body text-paper">
-            Irving Crown High School and Harry D. Jacobs High School — one class, together again.
+            {t["footer.tagline"]}
           </p>
           {/* Organizer contact email is an admin setting (SPEC §11). */}
           {organizerContactEmail ? (

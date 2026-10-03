@@ -77,6 +77,7 @@ for (const size of SIZES) {
         ["admin-rsvp-detail", `/admin/rsvps/${ids.alpha}`],
         ["admin-rsvp-pending", `/admin/rsvps/${ids.pending}`],
         ["admin-events", "/admin/events"],
+        ["admin-site-text", "/admin/content"],
         ["admin-event-edit", `/admin/events/${sql("select id from public.event_items where slug = 'sat-dinner'")}`],
         ["admin-photos", "/admin/photos"],
         ["admin-exports", "/admin/exports"],

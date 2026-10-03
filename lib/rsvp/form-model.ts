@@ -17,6 +17,8 @@ export interface FormItem {
   priceLabel: string | null;
   allowsGuests: boolean;
   halftimeEligible: boolean;
+  halftimeLabel: string;
+  halftimeHint: string;
   confirmed: boolean;
   unconfirmedNote: string | null;
   full: boolean;

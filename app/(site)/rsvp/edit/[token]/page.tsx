@@ -6,7 +6,7 @@ import { RsvpHeader } from "@/components/rsvp/RsvpHeader";
 import { ComingSoonCard } from "@/components/ui/ComingSoonCard";
 import { getEventItems } from "@/lib/data/events";
 import { getAvailability, getRsvpByToken, isPastDeadline } from "@/lib/data/rsvp";
-import { getPublicSettings } from "@/lib/data/settings";
+import { getPublicSettings, getSiteText } from "@/lib/data/settings";
 import { toFormItems } from "@/lib/rsvp/form-items";
 import { yearbooksReady } from "@/lib/data/yearbooks";
 import type { FormState } from "@/lib/rsvp/form-model";
@@ -46,6 +46,7 @@ export default async function EditRsvpPage({
   }
 
   const [items, availability, settings] = await Promise.all([getEventItems(), getAvailability(), getPublicSettings()]);
+  const t = await getSiteText();
   const selections: FormState["selections"] = {};
   for (const reg of saved.registrations) {
     selections[reg.slug] = { ...emptySelection(), selected: true, guests: reg.guests, halftime: reg.halftime, guestNames: reg.guestNames };
@@ -75,7 +76,7 @@ export default async function EditRsvpPage({
           <RsvpForm
             mode="edit"
             token={token}
-            items={toFormItems(items, availability)}
+            items={toFormItems(items, availability, t)}
             initial={initial}
             lockedPaid={isPastDeadline(settings.rsvpDeadline)}
             yearbooksAvailable={await yearbooksReady()}

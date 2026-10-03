@@ -65,6 +65,7 @@ test.describe("Organizer admin (SPEC §11)", () => {
       from json_populate_recordset(null::public.event_items, '${events.replace(/'/g, "''")}') s where e.id = s.id`);
     sql(`update public.settings t set value = coalesce(s.value, 'null'::jsonb) from json_populate_recordset(null::public.settings, '${settings.replace(/'/g, "''")}') s where t.key = s.key`);
     sql("delete from public.memoriam where name like 'Test %'");
+    sql("delete from public.settings where key = 'site_text'");
     sql("delete from public.email_log where to_email::text like 'adm-test-%'");
     sql("delete from public.attendees where email::text like 'adm-test-%'");
     sql(`delete from public.admin_users where email = '${ADMIN}'`);
@@ -189,6 +190,31 @@ test.describe("Organizer admin (SPEC §11)", () => {
       await page.getByRole("button", { name: "Email them a new link" }).click();
       await expect(page.getByRole("status")).toContainText("Email sent");
       expect(sql("select body_text from public.email_log where to_email = 'adm-test-walker@example.com' and template = 'edit-link' order by created_at desc limit 1")).toContain("organizer sent you a fresh link");
+    });
+
+    test("site text: the organizer rewrites headings and paragraphs; blank restores the original", async ({ page, context }) => {
+      await page.goto("/admin/content");
+      await axeClean(page);
+      await page.getByLabel("Headline", { exact: true }).fill("Fifty years. One weekend. Come home.");
+      await page.getByRole("textbox", { name: "Introduction" }).first().fill("Every event is optional.\n\n**Parking is free** at every venue.");
+      await page.getByLabel(/Label on events at the same time/).fill("Pick one");
+      await page.getByRole("button", { name: "Save site text" }).click();
+      await expect(page.getByRole("status")).toContainText("Saved");
+      await expect(page.getByText("Original: Three years together. One year apart. Fifty years later.")).toBeVisible();
+      expect(sql("select value::text from public.settings where key = 'site_text'")).not.toContain("weekend.coming_soon");
+
+      const site = await context.newPage();
+      await unlock(site, "/");
+      await expect(site.getByRole("heading", { level: 1, name: "Fifty years. One weekend. Come home." })).toBeVisible();
+      await site.goto("/weekend");
+      await expect(site.locator("strong", { hasText: "Parking is free" })).toBeVisible();
+      await expect(site.getByText("Pick one", { exact: true }).first()).toBeVisible();
+
+      await page.getByLabel("Headline", { exact: true }).fill("");
+      await page.getByRole("button", { name: "Save site text" }).click();
+      await expect(page.getByRole("status")).toContainText("Saved");
+      await site.goto("/");
+      await expect(site.getByRole("heading", { level: 1, name: "Three years together. One year apart. Fifty years later." })).toBeVisible();
     });
 
     test("settings turn on the Info and In Memoriam pages", async ({ page, context }) => {

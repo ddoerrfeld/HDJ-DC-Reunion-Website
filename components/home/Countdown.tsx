@@ -1,3 +1,5 @@
+import { Markdown } from "@/components/ui/Markdown";
+import { getSiteText } from "@/lib/data/settings";
 import { EVENT_START_DAY } from "@/lib/data/events";
 import { daysUntil } from "@/lib/format";
 
@@ -5,7 +7,8 @@ import { daysUntil } from "@/lib/format";
  * Days-only countdown, computed in Chicago time. Deliberately not a ticking
  * clock: seconds-level motion is distracting and noisy for screen readers.
  */
-export function Countdown() {
+export async function Countdown() {
+  const t = await getSiteText();
   const days = daysUntil(EVENT_START_DAY);
 
   let figure: string;
@@ -35,12 +38,9 @@ export function Countdown() {
         </p>
         <div className="flex flex-col gap-3 text-center md:border-l-2 md:border-line md:pl-14 md:text-left">
           <h2 id="countdown-title" className="text-h3 text-ink">
-            Friday, October 8 – Sunday, October 10, 2027
+            {t["general.dates_long"]}
           </h2>
-          <p className="measure text-body text-ink max-md:mx-auto">
-            Two schools, one class. Walk the same halls, cheer at the same fields, and sit down to
-            dinner together — fifty years on.
-          </p>
+          <Markdown className="measure text-body text-ink max-md:mx-auto">{t["home.countdown_text"]}</Markdown>
         </div>
       </div>
     </section>
