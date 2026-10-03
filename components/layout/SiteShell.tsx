@@ -1,8 +1,14 @@
 import type { ReactNode } from "react";
+import { getFeatureFlags } from "@/lib/data/settings";
 import { Footer } from "./Footer";
 import { Header } from "./Header";
+import { INFO_LINK, MEMORIAM_LINK, NAV_LINKS } from "./nav";
 
-export function SiteShell({ children }: { children: ReactNode }) {
+export async function SiteShell({ children }: { children: ReactNode }) {
+  // Optional pages (SPEC §2) join the menus when the organizer turns them on.
+  const flags = await getFeatureFlags();
+  const links = flags.faq ? [...NAV_LINKS, INFO_LINK] : NAV_LINKS;
+  const footerLinks = flags.inMemoriam ? [...links, MEMORIAM_LINK] : links;
   return (
     <div className="flex min-h-svh flex-col">
       <a
@@ -11,11 +17,11 @@ export function SiteShell({ children }: { children: ReactNode }) {
       >
         Skip to main content
       </a>
-      <Header />
+      <Header links={links} />
       <main id="main" tabIndex={-1} className="flex-1 focus:outline-none">
         {children}
       </main>
-      <Footer />
+      <Footer links={footerLinks} />
     </div>
   );
 }

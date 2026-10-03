@@ -6,6 +6,8 @@ const nextConfig: NextConfig = {
   poweredByHeader: false,
   // WASM/native image libraries must load from node_modules, not the bundle.
   serverExternalPackages: ["heic-convert", "libheif-js", "sharp"],
+  // Admin photo uploads (hotel, In Memoriam) go through server actions; Vercel caps bodies at 4.5 MB.
+  experimental: { serverActions: { bodySizeLimit: "4.2mb" } },
   async headers() {
     const always = [
       { key: "X-Content-Type-Options", value: "nosniff" },

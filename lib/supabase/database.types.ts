@@ -23,7 +23,20 @@ export type Database = {
           }
         },"public": {
           Tables: {
-            "admin_users": {
+            "admin_login_tokens": {
+                  Row: {
+                    "created_at": string,"email": string,"expires_at": string,"token_hash": string,"used_at": string | null
+                  }
+                  Insert: {
+                    "created_at"?: string,"email": string,"expires_at": string,"token_hash": string,"used_at"?: string | null
+                  }
+                  Update: {
+                    "created_at"?: string,"email"?: string,"expires_at"?: string,"token_hash"?: string,"used_at"?: string | null
+                  }
+                  Relationships: [
+                    
+                  ]
+                },"admin_users": {
                   Row: {
                     "created_at": string,"email": string
                   }
@@ -146,13 +159,13 @@ isOneToOne: false
                   ]
                 },"memoriam": {
                   Row: {
-                    "grad_school": Database["public"]['Enums']["grad_school"],"id": string,"name": string,"note": string | null,"photo_path": string | null,"sort": number
+                    "grad_school": Database["public"]['Enums']["grad_school"],"id": string,"name": string,"note": string | null,"photo_path": string | null,"sort": number,"years": string | null
                   }
                   Insert: {
-                    "grad_school": Database["public"]['Enums']["grad_school"],"id"?: string,"name": string,"note"?: string | null,"photo_path"?: string | null,"sort"?: number
+                    "grad_school": Database["public"]['Enums']["grad_school"],"id"?: string,"name": string,"note"?: string | null,"photo_path"?: string | null,"sort"?: number,"years"?: string | null
                   }
                   Update: {
-                    "grad_school"?: Database["public"]['Enums']["grad_school"],"id"?: string,"name"?: string,"note"?: string | null,"photo_path"?: string | null,"sort"?: number
+                    "grad_school"?: Database["public"]['Enums']["grad_school"],"id"?: string,"name"?: string,"note"?: string | null,"photo_path"?: string | null,"sort"?: number,"years"?: string | null
                   }
                   Relationships: [
                     
@@ -216,13 +229,13 @@ isOneToOne: false
                   ]
                 },"registrations": {
                   Row: {
-                    "attendee_id": string,"created_at": string,"event_item_id": string,"guest_count": number,"halftime_walk": boolean,"id": string,"status": Database["public"]['Enums']["registration_status"],"updated_at": string
+                    "attendee_id": string,"created_at": string,"event_item_id": string,"guest_count": number,"halftime_walk": boolean,"id": string,"paid_at": string | null,"status": Database["public"]['Enums']["registration_status"],"updated_at": string
                   }
                   Insert: {
-                    "attendee_id": string,"created_at"?: string,"event_item_id": string,"guest_count"?: number,"halftime_walk"?: boolean,"id"?: string,"status": Database["public"]['Enums']["registration_status"],"updated_at"?: string
+                    "attendee_id": string,"created_at"?: string,"event_item_id": string,"guest_count"?: number,"halftime_walk"?: boolean,"id"?: string,"paid_at"?: string | null,"status": Database["public"]['Enums']["registration_status"],"updated_at"?: string
                   }
                   Update: {
-                    "attendee_id"?: string,"created_at"?: string,"event_item_id"?: string,"guest_count"?: number,"halftime_walk"?: boolean,"id"?: string,"status"?: Database["public"]['Enums']["registration_status"],"updated_at"?: string
+                    "attendee_id"?: string,"created_at"?: string,"event_item_id"?: string,"guest_count"?: number,"halftime_walk"?: boolean,"id"?: string,"paid_at"?: string | null,"status"?: Database["public"]['Enums']["registration_status"],"updated_at"?: string
                   }
                   Relationships: [
                     {

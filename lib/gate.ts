@@ -62,8 +62,8 @@ async function signingKey(config: GateConfig): Promise<CryptoKey> {
   ]);
 }
 
-export async function createGateToken(config: GateConfig, nowMs = Date.now()): Promise<string> {
-  const expires = Math.floor(nowMs / 1000) + GATE_MAX_AGE_SECONDS;
+export async function createGateToken(config: GateConfig, nowMs = Date.now(), maxAgeSeconds = GATE_MAX_AGE_SECONDS): Promise<string> {
+  const expires = Math.floor(nowMs / 1000) + maxAgeSeconds;
   const payload = `${TOKEN_VERSION}.${expires}`;
   const signature = await crypto.subtle.sign("HMAC", await signingKey(config), encoder.encode(payload));
   return `${payload}.${toBase64Url(signature)}`;

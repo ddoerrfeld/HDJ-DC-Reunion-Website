@@ -143,12 +143,14 @@ Class of ’77 · October 8–10, 2027`;
   return { subject, html, text };
 }
 
-export function editLinkEmail(opts: { firstName: string; editUrl: string; reason: "lost" | "duplicate" }) {
+export function editLinkEmail(opts: { firstName: string; editUrl: string; reason: "lost" | "duplicate" | "organizer" }) {
   const subject = "Your private link to change your Class of ’77 RSVP";
   const lead =
     opts.reason === "duplicate"
       ? "You tried to RSVP again with this email address — you’re already on the list, so nothing was changed."
-      : "You asked for the link to your RSVP.";
+      : opts.reason === "organizer"
+        ? "The reunion organizer sent you a fresh link to your RSVP."
+        : "You asked for the link to your RSVP.";
   const html = layout(
     subject,
     `<h1 style="margin:0 0 16px 0;font-family:Georgia,serif;font-size:28px;line-height:1.25;color:${INK};">Here’s your RSVP link</h1>
@@ -225,5 +227,24 @@ Hi ${opts.firstName}, the organizer has confirmed your RSVP. You now appear on W
 ${url}
 
 On a different phone or computer? Open the private RSVP link from your first email once, and the yearbooks will open there too.`;
+  return { subject, html, text };
+}
+
+/** Organizer sign-in link for /admin (single use, short-lived). */
+export function adminLoginEmail(opts: { url: string; minutes: number }) {
+  const subject = "Your sign-in link — Class of ’77 Reunion admin";
+  const html = layout(
+    subject,
+    `<h1 style="margin:0 0 16px 0;font-family:Georgia,serif;font-size:28px;line-height:1.25;color:${INK};">Sign in to the organizer pages</h1>
+<p style="margin:0;">Use this button to sign in. It works once and expires in ${opts.minutes} minutes.</p>
+${button(opts.url, "Sign in to admin")}
+<p style="margin:0;font-size:16px;color:${MUTED};">If you didn’t ask to sign in, you can ignore this email — nothing happens unless the button is used.</p>`,
+  );
+  const text = `SIGN IN TO THE ORGANIZER PAGES
+
+Use this link to sign in. It works once and expires in ${opts.minutes} minutes:
+${opts.url}
+
+If you didn’t ask to sign in, you can ignore this email.`;
   return { subject, html, text };
 }

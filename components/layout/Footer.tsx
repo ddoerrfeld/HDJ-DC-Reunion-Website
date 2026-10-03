@@ -2,9 +2,9 @@ import Link from "next/link";
 import { Monogram77 } from "@/components/brand/Monogram77";
 import { SeamBand } from "@/components/brand/Seam";
 import { getPublicSettings } from "@/lib/data/settings";
-import { NAV_LINKS } from "./nav";
+import type { NavLink } from "./nav";
 
-export async function Footer() {
+export async function Footer({ links }: { links: readonly NavLink[] }) {
   const { organizerContactEmail } = await getPublicSettings();
   return (
     <footer className="mt-auto bg-ink text-paper">
@@ -35,7 +35,7 @@ export async function Footer() {
         </div>
         <nav aria-label="Footer">
           <ul className="grid grid-cols-2 gap-x-6">
-            {[...NAV_LINKS, { href: "/rsvp", label: "RSVP" }].map((link) => (
+            {[...links, { href: "/rsvp", label: "RSVP" }].map((link) => (
               <li key={link.href}>
                 <Link href={link.href} className="flex min-h-12 items-center text-body text-paper">
                   {link.label}

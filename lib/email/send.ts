@@ -12,7 +12,7 @@ export interface OutgoingEmail {
   subject: string;
   html: string;
   text: string;
-  template: "rsvp-confirmation" | "edit-link" | "rsvp-updated" | "classmate-review" | "classmate-approved";
+  template: "rsvp-confirmation" | "edit-link" | "rsvp-updated" | "classmate-review" | "classmate-approved" | "admin-login";
   attendeeId?: string | null;
   replyTo?: string | null;
   attachments?: Attachment[];

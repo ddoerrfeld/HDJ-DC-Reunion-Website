@@ -4,6 +4,9 @@ import { publicDb } from "@/lib/supabase/server";
 export interface PublicSettings {
   organizerContactEmail: string | null;
   rsvpDeadline: string | null;
+  refundPolicyMd: string | null;
+  refundCutoffDate: string | null;
+  faqMd: string | null;
 }
 
 function asString(value: unknown): string | null {
@@ -27,6 +30,9 @@ export async function getPublicSettings(): Promise<PublicSettings> {
   return {
     organizerContactEmail: asString(map.get("organizer_contact_email")),
     rsvpDeadline: asString(map.get("rsvp_deadline")),
+    refundPolicyMd: asString(map.get("refund_policy_md")),
+    refundCutoffDate: asString(map.get("refund_cutoff_date")),
+    faqMd: asString(map.get("faq_md")),
   };
 }
 

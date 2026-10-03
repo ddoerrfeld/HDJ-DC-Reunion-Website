@@ -7,7 +7,7 @@ import { yearbooksReady } from "@/lib/data/yearbooks";
 import { getRsvpByToken, isPastDeadline, summaryLines, type SavedRsvp } from "@/lib/data/rsvp";
 import { getPublicSettings } from "@/lib/data/settings";
 import { sendEmail } from "@/lib/email/send";
-import { confirmationEmail, editLinkEmail } from "@/lib/email/templates";
+import { confirmationEmail } from "@/lib/email/templates";
 import { buildCalendar } from "@/lib/ics";
 import { deletePhoto, photoExists } from "@/lib/photos";
 import { clientKey, rateLimit } from "@/lib/rate-limit";
@@ -22,6 +22,7 @@ import {
 import { hashEditToken, looksLikeToken, newEditToken, RSVP_COOKIE, RSVP_COOKIE_MAX_AGE } from "@/lib/rsvp/token";
 import { SITE_URL } from "@/lib/site";
 import { serviceDb } from "@/lib/supabase/admin";
+import { sendEditLink } from "@/lib/rsvp/edit-link";
 import { checkClassmate, type ClassmateStatus } from "@/lib/classmates/review";
 import { grantYearbookAccess, sectionGateActive } from "@/lib/yearbook/access";
 import { sameChoice, type YearbookPhotoChoice } from "@/lib/yearbook/crop";
@@ -310,22 +311,6 @@ export async function deleteRsvp(token: string): Promise<void> {
   await deleteThenPhoto(removed.thenPhotoPath);
   (await cookies()).delete(RSVP_COOKIE);
   redirect("/rsvp/deleted");
-}
-
-async function sendEditLink(email: string, reason: "lost" | "duplicate") {
-  const db = serviceDb();
-  if (!db) return;
-  const { token, hash } = newEditToken();
-  const { data } = await db.rpc("rsvp_rotate_token", { p_email: email, p_new_hash: hash });
-  const found = data as { attendeeId: string; firstName: string; email: string } | null;
-  if (!found) return;
-  const message = editLinkEmail({ firstName: found.firstName, editUrl: `${SITE_URL}/rsvp/edit/${token}`, reason });
-  const { organizerContactEmail } = await getPublicSettings();
-  try {
-    await sendEmail({ ...message, to: found.email, template: "edit-link", attendeeId: found.attendeeId, replyTo: organizerContactEmail });
-  } catch (e) {
-    console.error("[rsvp] edit-link email failed", e);
-  }
 }
 
 /** "Lost your link?" (SPEC §7.3): rate-limited, and the response never reveals whether the email exists. */

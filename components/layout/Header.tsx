@@ -6,13 +6,13 @@ import { usePathname } from "next/navigation";
 import { useEffect, useId, useRef, useState } from "react";
 import { Monogram77 } from "@/components/brand/Monogram77";
 import { ButtonLink } from "@/components/ui/Button";
-import { NAV_LINKS } from "./nav";
+import type { NavLink } from "./nav";
 
 function isCurrent(pathname: string, href: string) {
   return pathname === href || pathname.startsWith(`${href}/`);
 }
 
-export function Header() {
+export function Header({ links }: { links: readonly NavLink[] }) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
   const [lastPath, setLastPath] = useState(pathname);
@@ -54,7 +54,7 @@ export function Header() {
 
         <nav aria-label="Main" className="hidden lg:block">
           <ul className="flex items-center gap-1">
-            {NAV_LINKS.map((link) => {
+            {links.map((link) => {
               const current = isCurrent(pathname, link.href);
               return (
                 <li key={link.href}>
@@ -102,7 +102,7 @@ export function Header() {
         className="border-t border-line bg-paper-raised lg:hidden"
       >
         <ul className="container-page flex flex-col py-2">
-          {NAV_LINKS.map((link) => {
+          {links.map((link) => {
             const current = isCurrent(pathname, link.href);
             return (
               <li key={link.href} className="border-b border-line last:border-b-0">

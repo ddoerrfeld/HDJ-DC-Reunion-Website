@@ -51,8 +51,8 @@ Fonts (via `next/font`): **Graduate** (display, uppercase, +2% tracking, never b
 | 3 — RSVP (no payment) | ✅ Approved by owner (production Supabase, Resend, Turnstile keys not yet connected) |
 | 4 — Payments | ❌ Cancelled by owner — no payment processor. Paid events show a “Payment details coming soon” placeholder. |
 | 5 — Yearbooks | ✅ Approved by owner 2026-10-01. Name search (OCR) turned on. School marks: Jacobs 1977 HDJ mark + original Crown helmet (owner deferred to judgment). |
-| 6 — Directory | Built — awaiting owner approval (2026-10-01). |
-| 7 — Admin | Not started |
+| 6 — Directory | ✅ Approved by owner |
+| 7 — Admin | Built — awaiting owner approval (2026-10-03). Production admin: dan@616flatsticks.com (owner can add/remove in Settings). |
 | 8 — Hardening & Launch | Not started |
 
 ## Approved deviations from SPEC
@@ -71,6 +71,12 @@ Fonts (via `next/font`): **Graduate** (display, uppercase, +2% tracking, never b
 - **Who’s Coming uses the yearbook section gate** (classmate check) at launch, as SPEC §12.1 groups them; preview stays open. Home teaser shows the live count and the 8 most recent photos without names.
 - **Directory filtering is client-side** over the (small) public list, with all filter state in the URL (`q, school, acts, match, days, photo, then, sort`).
 - **Event websites:** `event_items.website_url` (owner request) → “<venue> website” button on event cards.
+- **Admin sign-in is the site’s own one-time email link (Resend), not Supabase Auth** (Phase 7): `admin_users` allowlist → single-use token (sha256 in `admin_login_tokens`, 15 min) → `/admin/login/verify` needs a button press (mail scanners prefetch links) → `c77_admin` cookie signed with SITE_GATE_SECRET + email, 7-day expiry inside the token, allowlist re-checked on every request. Admin pages/actions use the service role after `requireAdmin()`; `/admin` is outside the site passcode gate. Rate-limited, same response for non-admins.
+- **“Mark as paid” per registration (`registrations.paid_at`)** replaces Stripe/offline-payment settings; dashboard shows paid vs not paid, collected vs expected (price × headcount). Fee handling / pay-offline / Stage B passcode settings dropped (no processor; classmate gate instead of a passcode).
+- **Admin RSVP edits:** personal details, directory flag, classmate approval, paid, waitlist ↔ confirmed, halftime, remove from an event, delete RSVP (type DELETE), new edit link (`sendEditLink` in `lib/rsvp/edit-link.ts`, server-only). Guest names/new events are changed by the attendee via their link.
+- **Optional pages:** `/info` (FAQ written as one text, `##` per question, plus refund policy) and `/in-memoriam` (`memoriam.years` added; photos in public `memoriam` bucket) render only when their flags are on and join the menus. Blank settings are stored as `""` (settings.value is NOT NULL).
+- **Admin photo uploads** (hotels, In Memoriam) go through server actions, capped at 4 MB (`serverActions.bodySizeLimit` 4.2 MB, under Vercel’s 4.5 MB).
+- **CSV exports** are UTF-8 with BOM, formula-injection guarded; rosters have one row per person (guests under their classmate) for check-in and name tags.
 - **Hidden pages:** blank endpapers/autograph pages (Jacobs 2–4, 181–183; Crown 2–4, 168–173).
 
 The owner deferred to engineering judgment on every issue flagged in the Phase 1 plan (“do not build to spec if you find a better way”). In effect:
