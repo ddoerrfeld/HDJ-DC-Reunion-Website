@@ -4,14 +4,18 @@ import Link from "next/link";
 import { AdminHeader, Stat, TableScroll, td, textLink, th } from "@/components/admin/ui";
 import { ButtonLink } from "@/components/ui/Button";
 import { requireAdmin } from "@/lib/admin/auth";
-import { formatCents, getDashboard } from "@/lib/admin/data";
+import { countRecentProblems, formatCents, getDashboard } from "@/lib/admin/data";
 import { formatDayName } from "@/lib/format";
 
 export const metadata: Metadata = { title: "Dashboard" };
 
 export default async function AdminDashboard() {
   await requireAdmin();
-  const d = await getDashboard();
+  const [d, problems] = await Promise.all([
+    getDashboard(),
+    countRecentProblems(7),
+  ]);
+  const problemCount = problems;
   const paidEvents = d.events.filter((s) => s.event.requires_payment);
   const halftime = d.events.filter((s) => s.event.halftime_eligible);
 
@@ -160,6 +164,18 @@ export default async function AdminDashboard() {
           <p className="text-body text-muted">No event is set to “requires payment”. Turn it on for an event in Events.</p>
         )}
         <p className="text-small text-muted">There’s no online payment: mark each RSVP as paid when the money arrives (RSVPs → open a person).</p>
+      </section>
+
+      <section aria-labelledby="health-h" className="flex flex-col gap-2">
+        <h2 id="health-h" className="text-h3 text-ink">
+          Site health
+        </h2>
+        <p className="text-body text-ink">
+          {problemCount === 0 ? "No problems recorded in the last 7 days." : `${problemCount} ${problemCount === 1 ? "problem" : "problems"} recorded in the last 7 days.`}{" "}
+          <Link href="/admin/problems" className="font-semibold text-crown-blue-deep underline">
+            See site problems
+          </Link>
+        </p>
       </section>
     </div>
   );

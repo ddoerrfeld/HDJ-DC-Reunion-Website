@@ -2,7 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Bitter, Graduate, Source_Sans_3 } from "next/font/google";
 import { heroBootScript } from "@/components/home/HeroController";
 import { PreviewRibbon } from "@/components/layout/PreviewRibbon";
-import { SITE_DESCRIPTION, SITE_NAME, isPreview } from "@/lib/site";
+import { SITE_DESCRIPTION, SITE_NAME, SITE_URL, isPreview } from "@/lib/site";
 import "./globals.css";
 
 const graduate = Graduate({ weight: "400", subsets: ["latin"], variable: "--font-graduate", display: "swap" });
@@ -10,8 +10,12 @@ const bitter = Bitter({ weight: ["700"], subsets: ["latin"], variable: "--font-b
 const sourceSans = Source_Sans_3({ subsets: ["latin"], variable: "--font-source-sans", display: "swap" });
 
 export const metadata: Metadata = {
+  metadataBase: new URL(SITE_URL),
   title: { default: SITE_NAME, template: `%s · Class of ’77 Reunion` },
   description: SITE_DESCRIPTION,
+  // The image itself comes from app/opengraph-image.png (scripts/generate-og.mts).
+  openGraph: { type: "website", siteName: "Class of ’77 · 50-Year Reunion", locale: "en_US", title: SITE_NAME, description: SITE_DESCRIPTION },
+  twitter: { card: "summary_large_image" },
   robots: isPreview() ? { index: false, follow: false } : undefined,
 };
 

@@ -206,7 +206,12 @@ test.describe("Organizer admin (SPEC §11)", () => {
 
       const site = await context.newPage();
       await unlock(site, "/");
-      await expect(site.getByRole("heading", { level: 1, name: "Fifty years. One weekend. Come home." })).toBeVisible();
+      await expect
+        .poll(async () => {
+          await site.goto("/");
+          return site.getByRole("heading", { level: 1, name: "Fifty years. One weekend. Come home." }).count();
+        }, { timeout: 30_000 })
+        .toBe(1);
       await site.goto("/weekend");
       await expect(site.locator("strong", { hasText: "Parking is free" })).toBeVisible();
       await expect(site.getByText("Pick one", { exact: true }).first()).toBeVisible();
@@ -214,8 +219,13 @@ test.describe("Organizer admin (SPEC §11)", () => {
       await page.getByLabel("Headline", { exact: true }).fill("");
       await page.getByRole("button", { name: "Save site text" }).click();
       await expect(page.getByRole("status")).toContainText("Saved");
-      await site.goto("/");
-      await expect(site.getByRole("heading", { level: 1, name: "Three years together. One year apart. Fifty years later." })).toBeVisible();
+      // The first visit after a save may still be the cached page while the fresh one renders.
+      await expect
+        .poll(async () => {
+          await site.goto("/");
+          return site.getByRole("heading", { level: 1, name: "Three years together. One year apart. Fifty years later." }).count();
+        }, { timeout: 30_000 })
+        .toBe(1);
     });
 
     test("classmate list: correcting a misread name confirms the waiting RSVP", async ({ page }) => {

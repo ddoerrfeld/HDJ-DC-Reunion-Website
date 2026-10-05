@@ -20,7 +20,8 @@
     "yearbook:ingest": "node scripts/ingest-yearbook.mts --ocr",
     "yearbook:roster": "node scripts/extract-roster.mts",
     "yearbook:deploy": "cd yearbook-cdn && wrangler deploy",
-    "yearbook:cdn-dev": "node scripts/yearbook-cdn-dev.mts"
+    "yearbook:cdn-dev": "node scripts/yearbook-cdn-dev.mts",
+    "uptime:deploy": "wrangler deploy --config uptime-worker/wrangler.jsonc"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.117.2",

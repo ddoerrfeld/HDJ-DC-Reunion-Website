@@ -110,14 +110,20 @@ export function isGateExempt(pathname: string): boolean {
     pathname === "/unlock" ||
     pathname === "/api/unlock" ||
     pathname === "/robots.txt" ||
+    pathname === "/sitemap.xml" ||
     pathname === "/icon.svg" ||
     pathname === "/apple-icon.png" ||
     pathname === "/favicon.ico" ||
+    // Link previews (Facebook, iMessage…) must be able to fetch the share image.
+    pathname.startsWith("/opengraph-image") ||
+    pathname.startsWith("/twitter-image") ||
     pathname.startsWith("/textures/") ||
     pathname === "/admin" ||
     pathname.startsWith("/admin/") ||
     pathname.startsWith("/api/stripe/webhook") ||
     pathname === "/api/revalidate" ||
+    pathname === "/api/health" ||
+    pathname === "/api/client-error" ||
     pathname.startsWith("/api/cron/")
   );
 }

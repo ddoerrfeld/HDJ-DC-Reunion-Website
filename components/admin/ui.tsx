@@ -16,7 +16,7 @@ export function AdminHeader({ title, children, actions }: { title: string; child
 }
 
 const NOTICES: Record<string, string> = {
-  saved: "Saved. The public pages update within a few seconds.",
+  saved: "Saved. The public site shows the change within a minute — reload the page if you don’t see it yet.",
   created: "Added.",
   deleted: "Deleted.",
   sent: "Email sent.",

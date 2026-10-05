@@ -112,6 +112,19 @@ isOneToOne: false
       referencedColumns: ["id"]
     }
                   ]
+                },"error_log": {
+                  Row: {
+                    "created_at": string,"detail": string | null,"digest": string | null,"id": string,"message": string,"path": string | null,"route": string | null,"source": string
+                  }
+                  Insert: {
+                    "created_at"?: string,"detail"?: string | null,"digest"?: string | null,"id"?: string,"message": string,"path"?: string | null,"route"?: string | null,"source": string
+                  }
+                  Update: {
+                    "created_at"?: string,"detail"?: string | null,"digest"?: string | null,"id"?: string,"message"?: string,"path"?: string | null,"route"?: string | null,"source"?: string
+                  }
+                  Relationships: [
+                    
+                  ]
                 },"event_items": {
                   Row: {
                     "address": string | null,"address_confirmed": boolean,"allows_guests": boolean,"capacity": number | null,"choice_group": string | null,"confirmed": boolean,"created_at": string,"day": string,"description_md": string,"ends_at": string | null,"halftime_eligible": boolean,"id": string,"location_name": string | null,"price_cents": number | null,"requires_payment": boolean,"slug": string,"sort": number,"starts_at": string | null,"title": string,"unconfirmed_note": string | null,"updated_at": string,"visible": boolean,"website_url": string | null

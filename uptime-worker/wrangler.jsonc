@@ -1,0 +1,17 @@
+{
+  // Uptime check for the reunion site. Deploy: npm run uptime:deploy (needs CLOUDFLARE_API_TOKEN).
+  // Secrets (wrangler secret put): RESEND_API_KEY, ALERT_TO.
+  "$schema": "../node_modules/wrangler/config-schema.json",
+  "name": "crownjacobs77-uptime",
+  "main": "src/index.js",
+  "compatibility_date": "2026-09-01",
+  "workers_dev": true,
+  "preview_urls": false,
+  "triggers": { "crons": ["*/5 * * * *"] },
+  "kv_namespaces": [{ "binding": "UPTIME", "id": "f0751b6538124757ac696bcfce5e95bc" }],
+  "vars": {
+    "CHECK_URL": "https://crownjacobs77.com/api/health",
+    "ALERT_FROM": "Class of ’77 Website <reunion@crownjacobs77.com>"
+  },
+  "observability": { "enabled": true }
+}

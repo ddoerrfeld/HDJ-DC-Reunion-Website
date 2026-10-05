@@ -18,7 +18,7 @@ function Book({ school, cover }: { school: "crown" | "jacobs"; cover?: string })
         alt=""
         width={240}
         height={314}
-        className={`h-60 w-auto origin-bottom rounded-r-sm shadow-[inset_6px_0_0_rgb(0_0_0/0.18),0_12px_24px_-12px_rgb(30_27_22/0.6)] sm:h-72 ${
+        className={`h-48 w-auto max-w-[44vw] object-contain origin-bottom rounded-r-sm shadow-[inset_6px_0_0_rgb(0_0_0/0.18),0_12px_24px_-12px_rgb(30_27_22/0.6)] sm:h-72 sm:max-w-none ${
           crown ? "rotate-[4deg]" : "-rotate-[4deg]"
         }`}
       />
@@ -46,7 +46,7 @@ export async function YearbookShelf() {
   return (
     <section aria-labelledby="yearbooks-title" className="bg-paper-sunk/60 py-16 md:py-24">
       <div className="container-page grid items-center gap-12 lg:grid-cols-2">
-        <div className="flex items-end justify-center gap-10 border-b-8 border-jacobs-brown/80 pb-0">
+        <div className="flex items-end justify-center gap-6 border-b-8 sm:gap-10 border-jacobs-brown/80 pb-0">
           <Book school="crown" cover={covers.crown?.display} />
           <Book school="jacobs" cover={covers.jacobs?.display} />
         </div>

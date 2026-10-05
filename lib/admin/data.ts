@@ -294,3 +294,10 @@ export async function getAdminEmails(): Promise<string[]> {
   if (error) throw new Error(error.message);
   return data.map((r) => r.email);
 }
+
+/** Errors recorded by lib/monitoring.ts in the last `days` days. */
+export async function countRecentProblems(days: number): Promise<number> {
+  const since = new Date(Date.now() - days * 86_400_000).toISOString();
+  const { count } = await requireServiceDb().from("error_log").select("id", { count: "exact", head: true }).gte("created_at", since);
+  return count ?? 0;
+}

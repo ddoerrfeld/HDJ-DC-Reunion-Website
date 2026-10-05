@@ -13,9 +13,25 @@ async function audit(page: import("@playwright/test").Page) {
   return { blocking, all: results.violations };
 }
 
-for (const width of [375, 1440]) {
-  test.describe(`axe at ${width}px`, () => {
-    test.use({ viewport: { width, height: 900 }, contextOptions: { reducedMotion: "reduce" } });
+const ROUTES = [...PUBLIC_ROUTES, "/rsvp/lost", "/yearbooks/jacobs", "/yearbooks/crown", "/this-page-does-not-exist"];
+
+// SPEC §4.5: nothing may need sideways scrolling at 375 px or at 200 % zoom.
+async function noSidewaysScroll(page: import("@playwright/test").Page) {
+  const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
+  expect(overflow, "page scrolls sideways").toBeLessThanOrEqual(1);
+}
+
+// 200 % browser zoom on a 1440 × 900 window = a 720 × 450 CSS-pixel viewport at 2× density.
+const VIEWPORTS = [
+  { label: "375px", viewport: { width: 375, height: 900 }, deviceScaleFactor: 1 },
+  { label: "1440px", viewport: { width: 1440, height: 900 }, deviceScaleFactor: 1 },
+  { label: "200% zoom", viewport: { width: 720, height: 450 }, deviceScaleFactor: 2 },
+];
+
+for (const { label, viewport, deviceScaleFactor } of VIEWPORTS) {
+  const width = viewport.width;
+  test.describe(`axe at ${label}`, () => {
+    test.use({ viewport, deviceScaleFactor, contextOptions: { reducedMotion: "reduce" } });
 
     test("gate page", async ({ page }) => {
       await page.goto("/unlock");
@@ -29,12 +45,13 @@ for (const width of [375, 1440]) {
       expect(all).toEqual([]);
     });
 
-    for (const route of [...PUBLIC_ROUTES, "/this-page-does-not-exist"]) {
+    for (const route of ROUTES) {
       test(route, async ({ page }) => {
         await unlock(page);
         await page.goto(route);
         const { all } = await audit(page);
         expect(all).toEqual([]);
+        if (!route.startsWith("/yearbooks/") && route !== "/styleguide") await noSidewaysScroll(page);
       });
     }
 

@@ -252,3 +252,27 @@ ${opts.url}
 If you didn’t ask to sign in, you can ignore this email.`;
   return { subject, html, text };
 }
+
+/** To the organizer when the site records an error (at most one an hour). */
+export function siteProblemEmail(opts: { message: string; path: string | null; source: "server" | "client" }) {
+  const subject = "The reunion website hit a problem";
+  const where = opts.path ? ` on ${opts.path}` : "";
+  const url = `${SITE_URL}/admin/problems`;
+  const html = layout(
+    subject,
+    `<h1 style="margin:0 0 16px 0;font-family:Georgia,serif;font-size:28px;line-height:1.25;color:${INK};">The website hit a problem</h1>
+<p style="margin:0 0 16px 0;">A ${opts.source === "server" ? "server" : "visitor’s browser"} error was recorded${esc(where)}:</p>
+<p style="margin:0 0 16px 0;padding:16px;background:#F6EAD0;font-family:Menlo,Consolas,monospace;font-size:15px;">${esc(opts.message)}</p>
+<p style="margin:0;">Nothing needs doing if the site looks fine — one-off errors happen. If it keeps happening or a page is broken, forward this email to whoever maintains the site. You won’t get another alert for an hour.</p>
+${button(url, "See recent problems")}`,
+  );
+  const text = `THE WEBSITE HIT A PROBLEM
+
+A ${opts.source} error was recorded${where}:
+${opts.message}
+
+Nothing needs doing if the site looks fine. If it keeps happening, forward this email to whoever maintains the site. You won’t get another alert for an hour.
+
+Recent problems: ${url}`;
+  return { subject, html, text };
+}

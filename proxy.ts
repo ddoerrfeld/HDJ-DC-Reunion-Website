@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { GATE_COOKIE, getGateConfig, isGateExempt, verifyGateToken } from "@/lib/gate";
+import { contentSecurityPolicy } from "@/lib/csp";
 import { getSiteStage } from "@/lib/site";
 
 // Mirrors lib/rsvp/token.ts (kept separate: that module uses node:crypto).
@@ -31,6 +32,12 @@ function rememberEditLink(request: NextRequest, response: NextResponse): NextRes
  * off; the yearbook section gate is enforced by the pages (lib/yearbook/access.ts).
  */
 export async function proxy(request: NextRequest) {
+  const response = await gate(request);
+  response.headers.set("Content-Security-Policy", contentSecurityPolicy());
+  return response;
+}
+
+async function gate(request: NextRequest): Promise<NextResponse> {
   if (getSiteStage() === "production") return rememberEditLink(request, NextResponse.next());
 
   const { pathname, search } = request.nextUrl;
