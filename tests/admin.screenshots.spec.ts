@@ -49,6 +49,9 @@ test.beforeAll(async () => {
   sql(`update public.registrations set halftime_walk = true where attendee_id = '${ids.bravo}'`);
   sql(`update public.settings set value = '{"faq": true, "in_memoriam": true, "yearbook_ocr": true}' where key = 'feature_flags'`);
   sql(`update public.settings set value = to_jsonb('## Is there parking?' || chr(10) || 'Yes — free parking at every venue.' || chr(10) || chr(10) || '## Can I bring my spouse?' || chr(10) || 'Of course. Add guests when you RSVP.'::text) where key = 'faq_md'`);
+  sql(`insert into public.error_log (source, message, path, route, detail) values
+    ('server', 'Example: database timed out', '/weekend', 'render /(site)/weekend/page', 'Error: example stack line 1'),
+    ('client', 'Example: undefined is not a function', '/rsvp', 'Mozilla/5.0 (iPhone)', null)`);
   sql(`insert into public.memoriam (name, grad_school, years, note, sort) values
     ('Test Remembered Classmate', 'crown', '1959–2020', 'Always first on the dance floor.', 1),
     ('Test Second Classmate', 'jacobs', '1959–2015', null, 2)`);
@@ -58,6 +61,7 @@ test.afterAll(() => {
   sql(`update public.event_items e set price_cents = s.price_cents from json_populate_recordset(null::public.event_items, '${events.replace(/'/g, "''")}') s where e.id = s.id`);
   sql(`update public.settings t set value = coalesce(s.value, 'null'::jsonb) from json_populate_recordset(null::public.settings, '${settings.replace(/'/g, "''")}') s where t.key = s.key`);
   sql("delete from public.memoriam where name like 'Test %'");
+  sql("delete from public.error_log where message like 'Example:%'");
   sql(`delete from public.email_log where to_email = '${ADMIN}'`);
   sql(`delete from public.admin_users where email = '${ADMIN}'`);
   clearDirectory();
@@ -85,6 +89,8 @@ for (const size of SIZES) {
         ["admin-stay-new", "/admin/stay/new"],
         ["admin-memoriam", "/admin/memoriam"],
         ["admin-settings", "/admin/settings"],
+        ["admin-classmates", "/admin/classmates"],
+        ["admin-problems", "/admin/problems"],
       ];
       for (const [name, path] of pages) {
         await page.goto(path);

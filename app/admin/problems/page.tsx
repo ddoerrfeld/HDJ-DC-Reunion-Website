@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { SubmitButton } from "@/components/admin/SubmitButton";
-import { AdminHeader, Notice, TableScroll, td, textLink, th } from "@/components/admin/ui";
+import { AdminHeader, Notice, textLink } from "@/components/admin/ui";
 import { requireAdmin } from "@/lib/admin/auth";
 import { formatStamp } from "@/lib/admin/data";
 import { requireServiceDb } from "@/lib/supabase/admin";
@@ -37,37 +37,26 @@ export default async function AdminProblems({ searchParams }: { searchParams: Pr
         <p className="card p-6 text-lead text-ink">No problems recorded. Everything is running normally.</p>
       ) : (
         <>
-          <TableScroll label="Recorded problems">
-            <table className="w-full border-collapse">
-              <thead>
-                <tr>
-                  <th scope="col" className={th}>Last seen</th>
-                  <th scope="col" className={th}>Times</th>
-                  <th scope="col" className={th}>Page</th>
-                  <th scope="col" className={th}>Problem</th>
-                </tr>
-              </thead>
-              <tbody>
-                {[...groups.values()].map((g) => (
-                  <tr key={`${g.source}${g.path}${g.message}`}>
-                    <td className={`${td} whitespace-nowrap`}>{formatStamp(g.last)}</td>
-                    <td className={td}>{g.count}</td>
-                    <td className={`${td} break-all`}>{g.path ?? "—"}</td>
-                    <td className={td}>
-                      <span className="font-semibold">{g.source === "server" ? "Server" : "Browser"}:</span> {g.message}
-                      {g.digest ? <span className="block text-small text-muted">Reference {g.digest}</span> : null}
-                      {g.detail ? (
-                        <details className="mt-1">
-                          <summary className="inline-flex min-h-12 cursor-pointer items-center text-small font-semibold text-crown-blue-deep underline">Technical details</summary>
-                          <pre className="overflow-x-auto rounded-sm bg-paper-sunk p-3 text-small whitespace-pre-wrap">{g.detail}</pre>
-                        </details>
-                      ) : null}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </TableScroll>
+          <ul className="flex flex-col gap-4">
+            {[...groups.values()].map((g) => (
+              <li key={`${g.source}${g.path}${g.message}`} className="card flex flex-col gap-2 p-5">
+                <p className="text-body font-semibold text-ink">
+                  {g.source === "server" ? "Server" : "Browser"}: <span className="font-normal">{g.message}</span>
+                </p>
+                <p className="text-small text-muted">
+                  {g.path ? `Page ${g.path} · ` : ""}
+                  {g.count === 1 ? "once" : `${g.count} times`} · last {formatStamp(g.last)}
+                  {g.digest ? ` · reference ${g.digest}` : ""}
+                </p>
+                {g.detail ? (
+                  <details>
+                    <summary className="inline-flex min-h-12 cursor-pointer items-center text-small font-semibold text-crown-blue-deep underline">Technical details</summary>
+                    <pre className="overflow-x-auto rounded-sm bg-paper-sunk p-3 text-small whitespace-pre-wrap">{g.detail}</pre>
+                  </details>
+                ) : null}
+              </li>
+            ))}
+          </ul>
           <form action={clearProblems}>
             <SubmitButton variant="secondary" pendingLabel="Clearing…">
               Clear the list
