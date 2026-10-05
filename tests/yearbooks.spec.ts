@@ -126,6 +126,21 @@ test.describe("classmate matching", () => {
     expect(matchClassmate({ firstName: "Christopher", hsLastName: "Wojciechowsky" }, roster)?.id).toBe("3");
     expect(matchClassmate({ firstName: "Deborah", hsLastName: "Smith", currentLastName: "O’Brien" }, roster)?.id).toBe("1");
   });
+  test("owner rule: same last name + same first initial; misread last names still match a matching first name", () => {
+    const more: ClassmateCandidate[] = [
+      { id: "10", school: "jacobs", first_name: "Catherine", last_name: "Novak", last_key: "novak", yearbook_page_id: null },
+      { id: "11", school: "jacobs", first_name: "Bernard", last_name: "Kowalczyk", last_key: "kowalczyk", yearbook_page_id: null },
+      { id: "12", school: "jacobs", first_name: "Paul", last_name: "Doerfield", last_key: "doerfield", yearbook_page_id: null },
+    ];
+    expect(matchClassmate({ firstName: "Cathy", hsLastName: "Novak" }, more)?.id).toBe("10");
+    expect(matchClassmate({ firstName: "Kathy", hsLastName: "Novak" }, more)?.id).toBe("10");
+    expect(matchClassmate({ firstName: "Bud", hsLastName: "Kowalczyk" }, more)?.id).toBe("11");
+    // OCR read "Doerrfeld" as "Doerfield": two letters off on a long name, same first name.
+    expect(matchClassmate({ firstName: "Paul", hsLastName: "Doerrfeld" }, more)?.id).toBe("12");
+    // A close last name is not enough with only an initial in common.
+    expect(matchClassmate({ firstName: "Pete", hsLastName: "Doerrfeld" }, more)).toBeNull();
+    expect(matchClassmate({ firstName: "Nancy", hsLastName: "Novak" }, more)).toBeNull();
+  });
   test("different first names or last names do not match", () => {
     expect(matchClassmate({ firstName: "Susan", hsLastName: "O’Brien" }, roster)).toBeNull();
     expect(matchClassmate({ firstName: "Richard", hsLastName: "Simon" }, roster)).toBeNull();

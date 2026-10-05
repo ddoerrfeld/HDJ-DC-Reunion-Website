@@ -7,7 +7,7 @@ import { requireAdmin } from "@/lib/admin/auth";
 import { isYearbookSchool, SCHOOL_NAMES } from "@/lib/data/yearbooks";
 import { requireServiceDb } from "@/lib/supabase/admin";
 import { expiryFor, signedYearbookUrl, yearbookCdnConfigured } from "@/lib/yearbook/sign";
-import { addClassmate, removeClassmate, saveBook, savePages } from "./actions";
+import { saveBook, savePages } from "./actions";
 
 export const metadata: Metadata = { title: "Yearbooks" };
 
@@ -16,17 +16,16 @@ export default async function AdminYearbooks({ searchParams }: { searchParams: P
   const p = await searchParams;
   const school = p.book && isYearbookSchool(p.book) ? p.book : "jacobs";
   const db = requireServiceDb();
-  const [{ data: book }, { data: pages }, { data: roster }] = await Promise.all([
+  const [{ data: book }, { data: pages }] = await Promise.all([
     db.from("yearbook_books").select("*").eq("school", school).maybeSingle(),
     db.from("yearbook_pages").select("id, seq, page_label, hidden, thumb_url").eq("school", school).order("seq"),
-    db.from("classmates").select("id, first_name, last_name, source").eq("school", school).order("last_name").order("first_name"),
   ]);
   const exp = expiryFor();
   const thumbs = yearbookCdnConfigured();
 
   return (
     <div className="flex flex-col gap-10">
-      <AdminHeader title="Yearbooks">Page labels, hidden pages, the seniors section and the classmate list used for the name check.</AdminHeader>
+      <AdminHeader title="Yearbooks">Page labels, hidden pages and the seniors section.</AdminHeader>
       <nav aria-label="Choose a yearbook" className="flex flex-wrap gap-2">
         {(["jacobs", "crown"] as const).map((s) => (
           <Link
@@ -100,40 +99,13 @@ export default async function AdminYearbooks({ searchParams }: { searchParams: P
         )}
       </section>
 
-      <section id="roster" aria-labelledby="roster-h" className="flex scroll-mt-24 flex-col gap-4">
-        <h2 id="roster-h" className="text-h3 text-ink">
-          Classmate list ({roster?.length ?? 0})
-        </h2>
-        <p className="measure text-body text-muted">
-          Read from the senior portraits. An RSVP whose name matches is confirmed automatically; anyone else waits for your check. Add people who
-          weren’t photographed, or fix a misread name by removing it and adding it correctly.
-        </p>
-        <form action={addClassmate} className="grid items-end gap-4 sm:grid-cols-[1fr_1fr_auto]">
-          <input type="hidden" name="school" value={school} />
-          <TextField id="cm-first" name="first_name" label="First name" required />
-          <TextField id="cm-last" name="last_name" label="Last name in 1977" required />
-          <SubmitButton variant="secondary" pendingLabel="Adding…">
-            Add
-          </SubmitButton>
-        </form>
-        <ul className="grid gap-x-6 sm:grid-cols-2 lg:grid-cols-3">
-          {roster?.map((c) => (
-            <li key={c.id} className="flex items-center justify-between gap-3 border-b border-line py-1">
-              <span className="text-body text-ink">
-                {c.last_name}, {c.first_name}
-                {c.source === "manual" ? <span className="text-small text-muted"> · added</span> : null}
-              </span>
-              <form action={removeClassmate}>
-                <input type="hidden" name="school" value={school} />
-                <input type="hidden" name="id" value={c.id} />
-                <button type="submit" className="inline-flex min-h-12 items-center font-semibold text-crown-blue-deep underline">
-                  Remove<span className="visually-hidden"> {c.first_name} {c.last_name}</span>
-                </button>
-              </form>
-            </li>
-          ))}
-        </ul>
-      </section>
+      <p className="text-body text-muted">
+        The list of senior names used for the classmate check is under{" "}
+        <Link href="/admin/classmates" className="font-semibold text-crown-blue-deep underline">
+          Classmates
+        </Link>
+        .
+      </p>
     </div>
   );
 }

@@ -3,8 +3,8 @@ import { serviceDb } from "@/lib/supabase/admin";
 /**
  * Classmate check (owner decision, Phase 5): does a name match someone in the
  * senior-class roster read from the yearbooks? Deliberately forgiving — a miss
- * only means the organizer approves by hand — but it needs the high-school last
- * name to match and a compatible first name, so random names don't pass.
+ * only means the organizer approves by hand — but it needs a matching (or
+ * nearly matching) last name plus a first name that fits, so random names don't pass.
  */
 
 /** Lower case, accents removed, letters only: "O’Brien" → "obrien", "De Bartolo" → "debartolo". */
@@ -106,28 +106,33 @@ export function firstNamesCompatible(a: string, b: string): boolean {
   return NICKNAME_GROUPS.some((group) => group.has(x) && group.has(y));
 }
 
-/** Levenshtein distance ≤ 1 (one OCR slip), only for longer names. */
-function nearlyEqual(a: string, b: string): boolean {
-  if (a === b) return true;
-  if (Math.min(a.length, b.length) < 6 || Math.abs(a.length - b.length) > 1) return false;
-  let i = 0;
-  let j = 0;
-  let edits = 0;
-  while (i < a.length && j < b.length) {
-    if (a[i] === b[j]) {
-      i++;
-      j++;
-      continue;
-    }
-    if (++edits > 1) return false;
-    if (a.length > b.length) i++;
-    else if (b.length > a.length) j++;
-    else {
-      i++;
-      j++;
-    }
+/** Edit distance (insertions, deletions, substitutions). */
+export function editDistance(a: string, b: string): number {
+  let prev = Array.from({ length: b.length + 1 }, (_, j) => j);
+  for (let i = 1; i <= a.length; i++) {
+    const cur = [i];
+    for (let j = 1; j <= b.length; j++) cur.push(Math.min(prev[j] + 1, cur[j - 1] + 1, prev[j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1)));
+    prev = cur;
   }
-  return edits + (a.length - i) + (b.length - j) <= 1;
+  return prev[b.length];
+}
+
+/**
+ * Last names that differ only by text-extraction (OCR) slips or a typo:
+ * one letter for names of 5+ letters, two for 8+ ("Doerfield" / "Doerrfeld").
+ */
+export function lastNamesClose(a: string, b: string): boolean {
+  if (a === b) return true;
+  const shorter = Math.min(a.length, b.length);
+  const allowed = shorter >= 8 ? 2 : shorter >= 5 ? 1 : 0;
+  return allowed > 0 && Math.abs(a.length - b.length) <= allowed && editDistance(a, b) <= allowed;
+}
+
+/** Owner rule: with the same last name, the same first initial is enough ("Cathy" for "Catherine", "Bud" for "Bernard"). */
+function sameInitial(a: string, b: string): boolean {
+  const x = nameKey(a);
+  const y = nameKey(b);
+  return Boolean(x && y && x[0] === y[0]);
 }
 
 export interface ClassmateCandidate {
@@ -146,30 +151,50 @@ export interface NameToMatch {
   currentLastName?: string | null;
 }
 
-/** Pure matcher (exported for tests): the best roster entry for a name, or null. */
+/**
+ * Pure matcher (exported for tests): the best roster entry for a name, or null.
+ *  - exact last name (high-school or current) + a compatible first name or the same first initial;
+ *  - a close last name (OCR slip or typo) + a compatible first name (nickname, prefix or exact).
+ */
 export function matchClassmate(person: NameToMatch, roster: ClassmateCandidate[]): ClassmateCandidate | null {
-  const lastKeys = [person.hsLastName, person.currentLastName].filter(Boolean).map((v) => nameKey(v!));
+  const lastKeys = [person.hsLastName, person.currentLastName].filter(Boolean).map((v) => nameKey(v!)).filter(Boolean);
   const firsts = [person.firstName, person.nickname].filter((v): v is string => Boolean(v && v.trim()));
   let best: { c: ClassmateCandidate; score: number } | null = null;
   for (const c of roster) {
     const exactLast = lastKeys.includes(c.last_key);
-    if (!exactLast && !lastKeys.some((k) => nearlyEqual(k, c.last_key))) continue;
-    if (!firsts.some((f) => firstNamesCompatible(f, c.first_name))) continue;
+    if (!exactLast && !lastKeys.some((k) => lastNamesClose(k, c.last_key))) continue;
     const exactFirst = firsts.some((f) => nameKey(f) === nameKey(c.first_name));
-    const score = (exactLast ? 2 : 0) + (exactFirst ? 1 : 0);
+    const compatible = exactFirst || firsts.some((f) => firstNamesCompatible(f, c.first_name));
+    const initial = compatible || firsts.some((f) => sameInitial(f, c.first_name));
+    if (!(exactLast ? initial : compatible)) continue;
+    const score = (exactLast ? 4 : 0) + (exactFirst ? 2 : 0) + (compatible ? 1 : 0);
     if (!best || score > best.score) best = { c, score };
   }
   return best?.c ?? null;
 }
 
-export async function findClassmate(person: NameToMatch): Promise<ClassmateCandidate | null> {
+export async function loadRoster(): Promise<ClassmateCandidate[]> {
   const db = serviceDb();
-  if (!db) return null;
-  const { data, error } = await db
-    .from("classmates")
-    .select("id, school, first_name, last_name, last_key, yearbook_page_id");
+  if (!db) return [];
+  const { data, error } = await db.from("classmates").select("id, school, first_name, last_name, last_key, yearbook_page_id");
   if (error) throw new Error(`Roster lookup failed: ${error.message}`);
-  return matchClassmate(person, (data ?? []) as ClassmateCandidate[]);
+  return (data ?? []) as ClassmateCandidate[];
+}
+
+export async function findClassmate(person: NameToMatch): Promise<ClassmateCandidate | null> {
+  return matchClassmate(person, await loadRoster());
+}
+
+/** For the organizer: list entries whose last name is close to this one (for spotting misread names). */
+export function similarClassmates(person: NameToMatch, roster: ClassmateCandidate[], limit = 5): ClassmateCandidate[] {
+  const keys = [person.hsLastName, person.currentLastName].filter(Boolean).map((v) => nameKey(v!)).filter(Boolean);
+  if (!keys.length) return [];
+  return roster
+    .map((c) => ({ c, d: Math.min(...keys.map((k) => editDistance(k, c.last_key))) }))
+    .filter(({ c, d }) => d <= Math.max(2, Math.floor(c.last_key.length / 3)))
+    .sort((a, b) => a.d - b.d || a.c.last_name.localeCompare(b.c.last_name))
+    .slice(0, limit)
+    .map(({ c }) => c);
 }
 
 /** True once a roster exists; before that nobody is held for review. */

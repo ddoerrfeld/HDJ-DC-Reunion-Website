@@ -10,6 +10,7 @@ export const ADMIN_NAV = [
   { href: "/admin/content", label: "Site text" },
   { href: "/admin/photos", label: "Photos" },
   { href: "/admin/exports", label: "Exports" },
+  { href: "/admin/classmates", label: "Classmates" },
   { href: "/admin/yearbooks", label: "Yearbooks" },
   { href: "/admin/stay", label: "Stay" },
   { href: "/admin/memoriam", label: "In Memoriam" },

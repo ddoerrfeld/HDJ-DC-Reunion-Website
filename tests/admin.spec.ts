@@ -66,6 +66,7 @@ test.describe("Organizer admin (SPEC §11)", () => {
     sql(`update public.settings t set value = coalesce(s.value, 'null'::jsonb) from json_populate_recordset(null::public.settings, '${settings.replace(/'/g, "''")}') s where t.key = s.key`);
     sql("delete from public.memoriam where name like 'Test %'");
     sql("delete from public.settings where key = 'site_text'");
+    sql("delete from public.classmates where last_name in ('Hxlfxxmer', 'Halftimer', 'Addedperson')");
     sql("delete from public.email_log where to_email::text like 'adm-test-%'");
     sql("delete from public.attendees where email::text like 'adm-test-%'");
     sql(`delete from public.admin_users where email = '${ADMIN}'`);
@@ -215,6 +216,26 @@ test.describe("Organizer admin (SPEC §11)", () => {
       await expect(page.getByRole("status")).toContainText("Saved");
       await site.goto("/");
       await expect(site.getByRole("heading", { level: 1, name: "Three years together. One year apart. Fifty years later." })).toBeVisible();
+    });
+
+    test("classmate list: correcting a misread name confirms the waiting RSVP", async ({ page }) => {
+      sql(`update public.attendees set classmate_status = 'pending' where id = '${ids.walker}'`);
+      sql("insert into public.classmates (school, first_name, last_name) values ('jacobs', 'Walter', 'Hxlfxxmer') on conflict do nothing");
+      await page.goto(`/admin/rsvps/${ids.walker}`);
+      await expect(page.getByRole("link", { name: "Walter Hxlfxxmer" })).toBeVisible();
+      await page.getByRole("link", { name: "Walter Hxlfxxmer" }).click();
+      await expect(page.getByRole("heading", { level: 1, name: "Classmates" })).toBeVisible();
+      await axeClean(page);
+      await page.getByLabel("Last name for Walter Hxlfxxmer").fill("Halftimer");
+      await page.getByRole("button", { name: "Save Walter Hxlfxxmer" }).click();
+      await expect(page.getByRole("status")).toContainText("1 waiting RSVP now matches and was confirmed");
+      expect(sql(`select classmate_status from public.attendees where id = '${ids.walker}'`)).toBe("matched");
+      expect(sql("select count(*) from public.email_log where to_email = 'adm-test-walker@example.com' and template = 'classmate-approved'")).not.toBe("0");
+
+      await page.getByLabel("First name", { exact: true }).fill("Addie");
+      await page.getByLabel("Last name in 1977").fill("Addedperson");
+      await page.getByRole("button", { name: "Add", exact: true }).click();
+      await expect(page.getByRole("status")).toContainText("Added Addie Addedperson");
     });
 
     test("settings turn on the Info and In Memoriam pages", async ({ page, context }) => {

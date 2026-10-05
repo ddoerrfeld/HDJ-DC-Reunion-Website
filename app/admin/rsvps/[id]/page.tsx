@@ -7,6 +7,7 @@ import { AdminHeader, CheckboxField, Notice, SelectField, textLink } from "@/com
 import { Badge } from "@/components/ui/Badge";
 import { TextField } from "@/components/ui/Field";
 import { requireAdmin } from "@/lib/admin/auth";
+import { loadRoster, similarClassmates } from "@/lib/classmates/match";
 import { formatCents, formatStamp, getAllEvents, getAttendee, isActiveRegistration, SCHOOL_LABEL } from "@/lib/admin/data";
 import { approve, clearSeeMe, deleteAttendee, removeRegistration, resendLink, setHalftime, setPaid, setPhotoHidden, setRegistrationStatus, updatePerson } from "../actions";
 
@@ -32,6 +33,7 @@ export default async function AdminRsvp({ params, searchParams }: { params: Prom
   const { ok, error } = await searchParams;
   const [a, events] = await Promise.all([getAttendee(id), getAllEvents()]);
   if (!a) notFound();
+  const close = a.classmateStatus === "pending" ? similarClassmates({ firstName: a.firstName, hsLastName: a.hsLastName, currentLastName: a.currentLastName }, await loadRoster()) : [];
   const byId = new Map(events.map((e) => [e.id, e]));
 
   return (
@@ -56,6 +58,19 @@ export default async function AdminRsvp({ params, searchParams }: { params: Prom
           <form action={approve} className="flex flex-col items-start gap-2">
             <Hidden attendee={a.id} />
             <p className="text-body text-muted">Until you confirm them they aren’t listed on Who’s Coming and can’t open the yearbooks. Their RSVP is saved either way.</p>
+            {close.length ? (
+              <p className="text-body text-ink">
+                Similar names on the classmate list — if one is a misspelling, correct it and they’ll be confirmed automatically:{" "}
+                {close.map((c, i) => (
+                  <span key={c.id}>
+                    {i > 0 ? ", " : ""}
+                    <Link href={`/admin/classmates?q=${encodeURIComponent(c.last_name)}#c-${c.id}`} className="font-semibold text-crown-blue-deep underline">
+                      {c.first_name} {c.last_name}
+                    </Link>
+                  </span>
+                ))}
+              </p>
+            ) : null}
             <SubmitButton pendingLabel="Confirming…">Yes, this is a classmate</SubmitButton>
           </form>
         ) : null}

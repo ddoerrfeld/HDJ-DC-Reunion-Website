@@ -50,21 +50,3 @@ export async function savePages(form: FormData): Promise<void> {
   back(s, "ok=saved", "#pages");
 }
 
-export async function addClassmate(form: FormData): Promise<void> {
-  await requireAdmin();
-  const s = school(form);
-  const first = str(form, "first_name");
-  const last = str(form, "last_name");
-  if (!first || !last) back(s, `error=${encodeURIComponent("Please enter a first and last name.")}`, "#roster");
-  const { error } = await requireServiceDb().from("classmates").insert({ school: s, first_name: first, last_name: last, source: "manual" });
-  if (error) back(s, `error=${encodeURIComponent(error.code === "23505" ? "That name is already on the list." : error.message)}`, "#roster");
-  back(s, "ok=created", "#roster");
-}
-
-export async function removeClassmate(form: FormData): Promise<void> {
-  await requireAdmin();
-  const s = school(form);
-  const id = str(form, "id");
-  if (UUID_RE.test(id)) await requireServiceDb().from("classmates").delete().eq("id", id).eq("school", s);
-  back(s, "ok=deleted", "#roster");
-}

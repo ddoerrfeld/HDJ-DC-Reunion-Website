@@ -4,7 +4,7 @@ import { sendEmail } from "@/lib/email/send";
 import { classmateApprovedEmail, classmateReviewEmail } from "@/lib/email/templates";
 import { SITE_URL } from "@/lib/site";
 import { serviceDb } from "@/lib/supabase/admin";
-import { findClassmate, rosterLoaded, type NameToMatch } from "./match";
+import { findClassmate, loadRoster, matchClassmate, rosterLoaded, type NameToMatch } from "./match";
 
 export type ClassmateStatus = "matched" | "pending" | "approved";
 
@@ -105,4 +105,37 @@ export async function approveClassmate(attendeeId: string): Promise<{ firstName:
     }
   }
   return { firstName: attendee.first_name };
+}
+
+/**
+ * After the organizer fixes or adds a name on the classmate list: runs the
+ * check again for every RSVP still waiting, confirms the ones that now match
+ * and emails them. Returns how many were confirmed.
+ */
+export async function recheckPending(): Promise<number> {
+  const db = serviceDb();
+  if (!db) return 0;
+  const { data: waiting, error } = await db
+    .from("attendees")
+    .select("id, first_name, nickname, hs_last_name, current_last_name, email")
+    .eq("status", "active")
+    .eq("classmate_status", "pending");
+  if (error) throw new Error(`Re-check failed: ${error.message}`);
+  if (!waiting?.length) return 0;
+  const roster = await loadRoster();
+  const { organizerContactEmail } = await getPublicSettings();
+  let confirmed = 0;
+  for (const a of waiting) {
+    const match = matchClassmate({ firstName: a.first_name, nickname: a.nickname, hsLastName: a.hs_last_name, currentLastName: a.current_last_name }, roster);
+    if (!match) continue;
+    const { error: setError } = await db.rpc("rsvp_set_classmate", { p_attendee_id: a.id, p_status: "matched", p_classmate_id: match.id });
+    if (setError) throw new Error(`Re-check failed: ${setError.message}`);
+    confirmed += 1;
+    try {
+      await sendEmail({ ...classmateApprovedEmail({ firstName: a.first_name }), to: a.email, template: "classmate-approved", attendeeId: a.id, replyTo: organizerContactEmail });
+    } catch (e) {
+      console.error("[classmates] approved email failed", e);
+    }
+  }
+  return confirmed;
 }
