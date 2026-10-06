@@ -1,4 +1,4 @@
-import { getSiteStage } from "@/lib/site";
+import { getSiteStage, SITE_URL } from "@/lib/site";
 import { serviceDb } from "@/lib/supabase/admin";
 
 export interface Attachment {
@@ -24,13 +24,19 @@ const DEFAULT_FROM = "Class of ’77 Reunion <reunion@crownjacobs77.com>";
  * Sends through Resend when RESEND_API_KEY is set (SPEC §13). Without it, in
  * preview only, the message is written to email_log (with its body) so tests
  * and previews can follow links; production without a key is an error.
+ *
+ * A copy of the site running on this machine (tests, local previews: SITE_URL on
+ * localhost) never sends real email, even if a key is present — its links would
+ * point at localhost and its test people would reach the real organizer inbox.
  */
+const LOCAL_SITE = /^https?:\/\/(localhost|127\.0\.0\.1)(:|\/|$)/.test(SITE_URL);
+
 export async function sendEmail(email: OutgoingEmail): Promise<void> {
-  const apiKey = process.env.RESEND_API_KEY;
+  const apiKey = LOCAL_SITE ? undefined : process.env.RESEND_API_KEY;
   const db = serviceDb();
 
   if (!apiKey) {
-    if (getSiteStage() === "production") throw new Error("RESEND_API_KEY is not configured.");
+    if (getSiteStage() === "production" && !LOCAL_SITE) throw new Error("RESEND_API_KEY is not configured.");
     console.info(`[email:log] to=${email.to} subject="${email.subject}"`);
     await db?.from("email_log").insert({
       attendee_id: email.attendeeId ?? null,
