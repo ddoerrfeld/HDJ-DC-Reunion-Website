@@ -12,7 +12,7 @@
 
 .hero {
   --split-dur: 3.4s; /* the blue/brown split and seam */
-  --hero-dur: 10s; /* whole intro: portraits build the 77, then the headline (owner request) */
+  --hero-dur: 8s; /* whole intro: portraits build the 77, then the headline (owner request) */
   --seam-dx: calc(50cqh * 0.53171);
   position: relative;
   container-type: size;
@@ -166,9 +166,10 @@ html[data-hero="play"] .hero-skip {
 
 /* Split (of 3.4 s): 0.6 s = 17.6 %, 1.2 s = 35.3 %, 1.7 s = 50 %, 2.2 s = 64.7 %,
    2.3 s = 67.6 %, 2.6 s = 76.5 %, 2.8 s = 82.4 %, 3.0 s = 88.2 %.
-   Whole intro (10 s, owner request — longer than SPEC’s 3.5 s): portraits arrive at a
-   steady pace 1.0–7.2 s (HeroMosaic.tsx), the full 77 holds, recedes 8.4–9.4 s, and the
-   headline fades in 8.8–10 s. Skip / click / scroll / any key ends it at once. */
+   Whole intro (8 s, owner request — longer than SPEC’s 3.5 s): portraits arrive at a
+   steady pace 0.9–5.5 s (HeroMosaic.tsx) with the horn and wing at 1.3–2.1 s, the full 77
+   holds, recedes 6.6–7.4 s, and the headline fades in 7.0–8.0 s. Skip / click / scroll /
+   any key ends it at once. */
 @keyframes hero-left {
   0%, 50% { transform: none; }
   64.7%, 67.6% { transform: translateX(-20px); }

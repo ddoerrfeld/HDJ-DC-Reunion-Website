@@ -22,14 +22,17 @@ export interface MosaicMeta {
   jacobs: number;
 }
 
-// Timeline, ms from first paint (hero.css: whole intro = 10 s).
-const BUILD_START = 1000; // first portrait
-const BUILD_END = 6600; // last portrait starts arriving; constant pace between
-const ARRIVE = 600; // each portrait's own fade-and-settle
-const RECEDE_START = 8400;
-const RECEDE_END = 9400;
+// Timeline, ms from first paint (hero.css: whole intro = 8 s).
+const BUILD_START = 900; // first portrait
+const BUILD_END = 5000; // last portrait starts arriving; constant pace between
+const ARRIVE = 500; // each portrait's own fade-and-settle
+const FLOURISH = [1300, 2100] as const; // horn and wing fade in once the top bars have begun
+const RECEDE_START = 6600;
+const RECEDE_END = 7400;
 const FINAL_ALPHA = 0.26; // watermark behind the headline
 const FRAME = "#F7F1E3"; // paper-colored print border, sets the 77 apart from the background
+const HORN = "#AECAF0"; // Crown portrait highlight blue
+const WING = "#F0B429"; // Jacobs gold
 
 type Kind = "crown" | "jacobs";
 interface Cell {
@@ -59,17 +62,36 @@ function shuffled(n: number, rand: () => number): number[] {
 }
 
 /** Fills the two 7s with portrait cells, set apart from the hero seam. */
-function layout(W: number, H: number, meta: MosaicMeta): { cells: Cell[]; size: number } {
-  const unit = Math.min((H * 0.72) / VB.h, (W * 0.88) / VB.w); // px per monogram unit
+interface Placement {
+  oy: number; // top of the 7s, CSS px
+  unit: number; // px per monogram unit
+  hornX: number; // where the horn's base starts: left end of the Crown 7's top row of prints
+  wingX: number; // where the wing's base ends: right end of the Jacobs 7's top row
+}
+
+// Base anchors in monogram units: the Crown 7's top-left and the Jacobs 7's top-right corners.
+const CROWN_LEFT = Number(MONOGRAM.crownSeven.split(",")[0]);
+const JACOBS_RIGHT = Number(MONOGRAM.jacobsSeven.split(" ")[1].split(",")[0]);
+
+function layout(W: number, H: number, meta: MosaicMeta): { cells: Cell[]; size: number; at: Placement } {
   // Monogram seam centerline at mid-height (y = 50) → hero center, so both 7s run parallel to the split.
   const seamMid = SEAM_X0 + 1.5 - 50 * K;
+  const reach = JACOBS_RIGHT + 10 - seamMid; // wing tip, right of the seam (units)
+  let unit = (H * 0.72) / VB.h; // px per monogram unit, then shrunk until the wing fits on narrow screens
+  let size = 0;
+  let channel = 0;
+  for (let i = 0; i < 4; i++) {
+    size = Math.max(18, Math.min(44, unit * 7.8)); // about a third of a stroke: faces stay readable
+    channel = size * 0.75; // each 7 steps this far away from the split line
+    unit = Math.min(unit, (W / 2 - 14 - channel) / reach);
+  }
+  size = Math.max(18, Math.min(44, unit * 7.8));
+  channel = size * 0.75;
   const ox = W / 2 - seamMid * unit;
   const oy = H / 2 - 50 * unit;
-  const size = Math.max(18, Math.min(44, unit * 7.8)); // about a third of a stroke: faces stay readable
-  const channel = size * 0.75; // each 7 steps this far away from the split line
 
   const probe = document.createElement("canvas").getContext("2d")!;
-  // Just the two 7s: at tile size the horn and wing read as stray squares.
+  // Portraits fill the two 7s; the horn and wing are drawn as shapes (as tiles they read as stray squares).
   const paths: Array<[Kind, Path2D]> = [
     ["crown", new Path2D(`M ${MONOGRAM.crownSeven.replace(/ /g, " L ")} Z`)],
     ["jacobs", new Path2D(`M ${MONOGRAM.jacobsSeven.replace(/ /g, " L ")} Z`)],
@@ -104,7 +126,12 @@ function layout(W: number, H: number, meta: MosaicMeta): { cells: Cell[]; size: 
       delay: BUILD_START + (n > 1 ? (rank / (n - 1)) * (BUILD_END - BUILD_START) : 0),
     };
   });
-  return { cells, size };
+  const top = found.filter((c) => c.y === oy);
+  const crownTop = top.filter((c) => c.kind === "crown").map((c) => c.x);
+  const jacobsTop = top.filter((c) => c.kind === "jacobs").map((c) => c.x + size);
+  const hornX = crownTop.length ? Math.min(...crownTop) : ox + CROWN_LEFT * unit - channel;
+  const wingX = jacobsTop.length ? Math.max(...jacobsTop) : ox + JACOBS_RIGHT * unit + channel;
+  return { cells, size, at: { oy, unit, hornX, wingX } };
 }
 
 const easeOut = (t: number) => 1 - Math.pow(1 - t, 3);
@@ -126,6 +153,9 @@ export function HeroMosaic({ src, meta }: { src: string; meta: MosaicMeta }) {
     let W = 0;
     let H = 0;
     let state = layout(1, 1, meta);
+    // Browser-only (Path2D doesn't exist during server rendering).
+    const hornPath = new Path2D(MONOGRAM.horn);
+    const wingPath = new Path2D(MONOGRAM.wing);
 
     const resize = () => {
       const dpr = Math.min(window.devicePixelRatio || 1, 2);
@@ -165,6 +195,24 @@ export function HeroMosaic({ src, meta }: { src: string; meta: MosaicMeta }) {
         ctx.fillRect(cx - outer / 2, cy - outer / 2, outer, outer);
         const s = inner * scale;
         ctx.drawImage(sprite, (c.tile % meta.cols) * meta.tile, Math.floor(c.tile / meta.cols) * meta.tile, meta.tile, meta.tile, cx - s / 2, cy - s / 2, s, s);
+      }
+      // Horn (Crown) and wing (Jacobs), each moving with its own 7, outlined like the prints.
+      const { oy, unit, hornX, wingX } = state.at;
+      const f = easeOut(clamp01((t - FLOURISH[0]) / (FLOURISH[1] - FLOURISH[0])));
+      if (f > 0) {
+        ctx.globalAlpha = f * fade;
+        ctx.lineJoin = "round";
+        for (const [path, color, x] of [[hornPath, HORN, hornX - CROWN_LEFT * unit], [wingPath, WING, wingX - JACOBS_RIGHT * unit]] as const) {
+          ctx.save();
+          ctx.translate(x, oy);
+          ctx.scale(unit, unit);
+          ctx.fillStyle = color;
+          ctx.fill(path);
+          ctx.lineWidth = (size > 24 ? 2 : 1.5) / unit;
+          ctx.strokeStyle = FRAME;
+          ctx.stroke(path);
+          ctx.restore();
+        }
       }
       ctx.globalAlpha = 1;
     };

@@ -3,7 +3,7 @@
 import { useEffect } from "react";
 
 export const HERO_PLAYED_KEY = "c77-hero-played";
-const HERO_DURATION_MS = 10_000;
+const HERO_DURATION_MS = 8000;
 const SKIP_EVENTS = ["pointerdown", "wheel", "touchmove", "keydown", "scroll"] as const;
 
 /**
