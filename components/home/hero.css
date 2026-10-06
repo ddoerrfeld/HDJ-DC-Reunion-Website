@@ -11,7 +11,8 @@
    ========================================================================== */
 
 .hero {
-  --hero-dur: 3.4s;
+  --split-dur: 3.4s; /* the blue/brown split and seam */
+  --hero-dur: 10s; /* whole intro: portraits build the 77, then the headline (owner request) */
   --seam-dx: calc(50cqh * 0.53171);
   position: relative;
   container-type: size;
@@ -119,7 +120,12 @@
 }
 
 /* ---------- Timeline (only while playing) ---------- */
-html[data-hero="play"] .hero :is(.hero-left, .hero-right, .hero-right-cover, .hero-label, .hero-seam-line, .hero-seam-stitch, .hero-content) {
+html[data-hero="play"] .hero :is(.hero-left, .hero-right, .hero-right-cover, .hero-label, .hero-seam-line, .hero-seam-stitch) {
+  animation-duration: var(--split-dur);
+  animation-timing-function: cubic-bezier(0.65, 0, 0.35, 1);
+  animation-fill-mode: both;
+}
+html[data-hero="play"] .hero-content {
   animation-duration: var(--hero-dur);
   animation-timing-function: cubic-bezier(0.65, 0, 0.35, 1);
   animation-fill-mode: both;
@@ -158,9 +164,11 @@ html[data-hero="play"] .hero-skip {
   100% { visibility: hidden; }
 }
 
-/* 0.6 s = 17.6 %, 1.2 s = 35.3 %, 1.7 s = 50 %, 2.2 s = 64.7 %,
-   2.3 s = 67.6 %, 2.6 s = 76.5 %, 2.8 s = 82.4 %, 3.0 s = 88.2 % (of 3.4 s; SPEC: ≤ 3.5 s).
-   The portrait mosaic (HeroMosaic.tsx) lands by 2.0 s and recedes 2.4–3.1 s as the text arrives. */
+/* Split (of 3.4 s): 0.6 s = 17.6 %, 1.2 s = 35.3 %, 1.7 s = 50 %, 2.2 s = 64.7 %,
+   2.3 s = 67.6 %, 2.6 s = 76.5 %, 2.8 s = 82.4 %, 3.0 s = 88.2 %.
+   Whole intro (10 s, owner request — longer than SPEC’s 3.5 s): portraits arrive at a
+   steady pace 1.0–7.2 s (HeroMosaic.tsx), the full 77 holds, recedes 8.4–9.4 s, and the
+   headline fades in 8.8–10 s. Skip / click / scroll / any key ends it at once. */
 @keyframes hero-left {
   0%, 50% { transform: none; }
   64.7%, 67.6% { transform: translateX(-20px); }
@@ -201,7 +209,7 @@ html[data-hero="play"] .hero-skip {
 }
 @keyframes hero-content {
   /* Invisible buttons must not be clickable; pointer-events flips back near the end. */
-  0%, 82.4% { opacity: 0; transform: translateY(12px); pointer-events: none; }
+  0%, 88% { opacity: 0; transform: translateY(12px); pointer-events: none; }
   100% { opacity: 1; transform: none; pointer-events: auto; }
 }
 

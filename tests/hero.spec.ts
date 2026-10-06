@@ -29,15 +29,15 @@ test.describe("home hero animation (SPEC §4.1)", () => {
     await expect.poll(() => heroState(page)).toBe("static");
   });
 
-  test("finishes on its own; the timeline is at most 3.5 s", async ({ page }) => {
+  test("finishes on its own in about 10 s (owner-approved length; SPEC said 3.5 s)", async ({ page }) => {
     await unlock(page);
     expect(await heroState(page)).toBe("play");
-    // The whole timeline is one CSS animation length; it must be ≤ 3.5 s.
+    // The intro ends with the headline animation; the owner asked for an 8–10 s portrait build.
     const durations = await page.evaluate(() =>
       document.getAnimations().map((a) => Number(a.effect?.getComputedTiming().endTime ?? 0)),
     );
-    expect(Math.max(...durations)).toBeLessThanOrEqual(3500);
-    await expect.poll(() => heroState(page), { timeout: 6_000 }).toBe("static");
+    expect(Math.max(...durations)).toBeLessThanOrEqual(10_000);
+    await expect.poll(() => heroState(page), { timeout: 13_000 }).toBe("static");
     await expect(page.locator(".hero-content")).toHaveCSS("opacity", "1");
   });
 
