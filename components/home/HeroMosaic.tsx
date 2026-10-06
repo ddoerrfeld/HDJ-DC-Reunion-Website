@@ -4,13 +4,15 @@ import { useEffect, useRef } from "react";
 import { MONOGRAM } from "@/components/brand/monogram-geometry";
 
 /**
- * Portrait mosaic for the home hero (owner request): the 1977 senior portraits,
- * tinted in each school's colors, arrive one after another at a steady pace and
- * build the “77” from top to bottom. The full 77 holds for a moment, then
- * recedes to a faint watermark as the headline arrives. Decorative (aria-hidden).
+ * Portrait mosaic for the home hero (owner request): small 1977 senior portraits,
+ * tinted in each school's colors, fly in one after another at a steady pace from
+ * scattered spots on their own school's side and land in random order until they
+ * form the “77” — horn and wing included (faces repeat where needed). The full 77
+ * holds for a moment, then recedes to a faint watermark as the headline arrives.
+ * Decorative (aria-hidden).
  *
- * The two 7s stand apart from the hero's split line, with a clear channel along
- * it. Timing follows the hero's CSS timeline (it starts at first paint, before
+ * Both 7s use the same tile pattern (same size) and stand apart from the hero's
+ * split line, with a clear channel along it. Timing follows the hero's CSS timeline (it starts at first paint, before
  * React), so a slow phone joins in progress rather than starting late. Reduced
  * motion, a repeat visit, or Skip draw the final watermark at once.
  */
@@ -23,16 +25,13 @@ export interface MosaicMeta {
 }
 
 // Timeline, ms from first paint (hero.css: whole intro = 8 s).
-const BUILD_START = 900; // first portrait
-const BUILD_END = 5000; // last portrait starts arriving; constant pace between
-const ARRIVE = 500; // each portrait's own fade-and-settle
-const FLOURISH = [1300, 2100] as const; // horn and wing fade in once the top bars have begun
+const BUILD_START = 700; // first portrait sets off
+const BUILD_END = 4600; // last portrait sets off; evenly spaced between (constant pace)
+const ARRIVE = 1100; // each portrait's flight from its scattered spot
 const RECEDE_START = 6600;
 const RECEDE_END = 7400;
 const FINAL_ALPHA = 0.26; // watermark behind the headline
 const FRAME = "#F7F1E3"; // paper-colored print border, sets the 77 apart from the background
-const HORN = "#AECAF0"; // Crown portrait highlight blue
-const WING = "#F0B429"; // Jacobs gold
 
 type Kind = "crown" | "jacobs";
 interface Cell {
@@ -40,6 +39,9 @@ interface Cell {
   y: number;
   tile: number; // sprite index (crown first, then jacobs)
   delay: number;
+  sx: number; // scattered start (top-left), CSS px
+  sy: number;
+  rot: number; // starting tilt, radians
 }
 
 const K = 1 / Math.tan((62 * Math.PI) / 180);
@@ -62,18 +64,13 @@ function shuffled(n: number, rand: () => number): number[] {
 }
 
 /** Fills the two 7s with portrait cells, set apart from the hero seam. */
-interface Placement {
-  oy: number; // top of the 7s, CSS px
-  unit: number; // px per monogram unit
-  hornX: number; // where the horn's base starts: left end of the Crown 7's top row of prints
-  wingX: number; // where the wing's base ends: right end of the Jacobs 7's top row
-}
 
-// Base anchors in monogram units: the Crown 7's top-left and the Jacobs 7's top-right corners.
+// Anchors in monogram units: the 7s' top-left corners and the Jacobs 7's top-right corner.
 const CROWN_LEFT = Number(MONOGRAM.crownSeven.split(",")[0]);
 const JACOBS_RIGHT = Number(MONOGRAM.jacobsSeven.split(" ")[1].split(",")[0]);
+const JACOBS_LEFT = Number(MONOGRAM.jacobsSeven.split(",")[0]);
 
-function layout(W: number, H: number, meta: MosaicMeta): { cells: Cell[]; size: number; at: Placement } {
+function layout(W: number, H: number, meta: MosaicMeta): { cells: Cell[]; size: number } {
   // Monogram seam centerline at mid-height (y = 50) → hero center, so both 7s run parallel to the split.
   const seamMid = SEAM_X0 + 1.5 - 50 * K;
   const reach = JACOBS_RIGHT + 10 - seamMid; // wing tip, right of the seam (units)
@@ -81,57 +78,67 @@ function layout(W: number, H: number, meta: MosaicMeta): { cells: Cell[]; size: 
   let size = 0;
   let channel = 0;
   for (let i = 0; i < 4; i++) {
-    size = Math.max(18, Math.min(44, unit * 7.8)); // about a third of a stroke: faces stay readable
-    channel = size * 0.75; // each 7 steps this far away from the split line
+    size = Math.max(10, Math.min(24, unit * 4.3)); // small prints, many of them
+    channel = Math.max(18, size * 1.6); // each 7 steps this far away from the split line
     unit = Math.min(unit, (W / 2 - 14 - channel) / reach);
   }
-  size = Math.max(18, Math.min(44, unit * 7.8));
-  channel = size * 0.75;
+  size = Math.max(10, Math.min(24, unit * 4.3));
+  channel = Math.max(18, size * 1.6);
   const ox = W / 2 - seamMid * unit;
   const oy = H / 2 - 50 * unit;
 
   const probe = document.createElement("canvas").getContext("2d")!;
-  // Portraits fill the two 7s; the horn and wing are drawn as shapes (as tiles they read as stray squares).
-  const paths: Array<[Kind, Path2D]> = [
-    ["crown", new Path2D(`M ${MONOGRAM.crownSeven.replace(/ /g, " L ")} Z`)],
-    ["jacobs", new Path2D(`M ${MONOGRAM.jacobsSeven.replace(/ /g, " L ")} Z`)],
-  ];
+  const jacobsBody = new Path2D(`M ${MONOGRAM.jacobsSeven.replace(/ /g, " L ")} Z`);
+  const horn = new Path2D(MONOGRAM.horn);
+  const wing = new Path2D(MONOGRAM.wing);
+  // The Crown 7 is the Jacobs 7's pattern moved left, so both 7s are exactly the same size.
+  const crownShift = (CROWN_LEFT - JACOBS_LEFT) * unit - 2 * channel;
+  const inside = (p: Path2D, x: number, y: number) => probe.isPointInPath(p, (x + size / 2 - ox) / unit, (y + size / 2 - oy) / unit);
 
-  // Rows are shifted along the 62° slant, so the stems become clean slanted columns of prints
-  // (brickwork following the stroke) instead of a jagged staircase.
+  // Rows are shifted along the 62° slant, so the stems become clean slanted columns of prints.
   const found: Array<{ x: number; y: number; kind: Kind }> = [];
-  for (let y = oy; y < oy + 100 * unit; y += size) {
+  for (let y = oy + VB.y * unit; y < oy + 100 * unit; y += size) {
     const shift = -((y + size / 2 - oy) * K) % size;
     for (let x = ox - size + shift; x < ox + VB.w * unit; x += size) {
-      const hit = paths.find(([, p]) => probe.isPointInPath(p, (x + size / 2 - ox) / unit, (y + size / 2 - oy) / unit));
-      if (hit) found.push({ x: x + (hit[0] === "crown" ? -channel : channel), y, kind: hit[0] });
+      if (inside(jacobsBody, x, y)) {
+        found.push({ x: x + channel, y, kind: "jacobs" });
+        found.push({ x: x + channel + crownShift, y, kind: "crown" });
+      } else if (inside(wing, x, y)) {
+        found.push({ x: x + channel, y, kind: "jacobs" });
+      }
+    }
+  }
+  // Horn: its own grid pass at the Crown 7's position (the horn sits on the Crown 7's top-left corner).
+  for (let y = oy + VB.y * unit; y < oy; y += size) {
+    const shift = -((y + size / 2 - oy) * K) % size;
+    for (let x = ox - size + shift; x < ox + VB.w * unit; x += size) {
+      if (inside(horn, x, y)) found.push({ x: x - channel, y, kind: "crown" });
     }
   }
 
-  // Top to bottom, a little jitter so it reads as hands placing photos, not a printer.
+  // Random order, steady pace; each print flies in from a scattered spot on its own school's side.
   const rand = seeded(1977);
-  const order = found.map((c, i) => ({ i, key: c.y + rand() * size * 1.5 })).sort((a, b) => a.key - b.key);
+  const order = shuffled(found.length, rand);
   const crownTiles = shuffled(meta.crown, rand);
   const jacobsTiles = shuffled(meta.jacobs, rand);
   let ci = 0;
   let ji = 0;
   const n = found.length;
-  const cells: Cell[] = order.map(({ i }, rank) => {
+  const cells: Cell[] = order.map((i, rank) => {
     const c = found[i];
+    const crown = c.kind === "crown";
     return {
       x: c.x,
       y: c.y,
-      tile: c.kind === "crown" ? crownTiles[ci++ % meta.crown] : meta.crown + jacobsTiles[ji++ % meta.jacobs],
-      // Constant pace: evenly spaced arrivals across the build.
+      // Faces repeat when the 7s need more prints than there are portraits.
+      tile: crown ? crownTiles[ci++ % meta.crown] : meta.crown + jacobsTiles[ji++ % meta.jacobs],
       delay: BUILD_START + (n > 1 ? (rank / (n - 1)) * (BUILD_END - BUILD_START) : 0),
+      sx: crown ? rand() * 0.48 * W : W * 0.52 + rand() * 0.48 * W,
+      sy: rand() * H,
+      rot: (rand() - 0.5) * 1.2,
     };
   });
-  const top = found.filter((c) => c.y === oy);
-  const crownTop = top.filter((c) => c.kind === "crown").map((c) => c.x);
-  const jacobsTop = top.filter((c) => c.kind === "jacobs").map((c) => c.x + size);
-  const hornX = crownTop.length ? Math.min(...crownTop) : ox + CROWN_LEFT * unit - channel;
-  const wingX = jacobsTop.length ? Math.max(...jacobsTop) : ox + JACOBS_RIGHT * unit + channel;
-  return { cells, size, at: { oy, unit, hornX, wingX } };
+  return { cells, size };
 }
 
 const easeOut = (t: number) => 1 - Math.pow(1 - t, 3);
@@ -153,9 +160,6 @@ export function HeroMosaic({ src, meta }: { src: string; meta: MosaicMeta }) {
     let W = 0;
     let H = 0;
     let state = layout(1, 1, meta);
-    // Browser-only (Path2D doesn't exist during server rendering).
-    const hornPath = new Path2D(MONOGRAM.horn);
-    const wingPath = new Path2D(MONOGRAM.wing);
 
     const resize = () => {
       const dpr = Math.min(window.devicePixelRatio || 1, 2);
@@ -178,42 +182,29 @@ export function HeroMosaic({ src, meta }: { src: string; meta: MosaicMeta }) {
       ctx.clearRect(0, 0, W, H);
       if (!sprite.complete || !sprite.naturalWidth) return;
       const { cells, size } = state;
-      const border = size > 24 ? 2 : 1.5;
-      const inner = size - 2 * border - 2; // 2 px gutter between prints
+      const border = size > 16 ? 1.5 : 1;
+      const inner = size - 2 * border - 1; // 1 px gutter between prints
       const fade = 1 - (1 - FINAL_ALPHA) * easeOut(clamp01((t - RECEDE_START) / (RECEDE_END - RECEDE_START)));
+      const dpr = canvas.width / Math.max(1, W);
       for (const c of cells) {
         const p = clamp01((t - c.delay) / ARRIVE);
         if (p <= 0) continue;
         const e = easeOut(p);
-        // Each print fades in while settling from slightly larger, like being set down.
-        const scale = 1 + 0.25 * (1 - e);
-        const cx = c.x + size / 2;
-        const cy = c.y + size / 2;
+        const x = c.sx + (c.x - c.sx) * e + size / 2;
+        const y = c.sy + (c.y - c.sy) * e + size / 2;
+        const a = c.rot * (1 - e);
+        const scale = 1 + 0.6 * (1 - e);
+        const cos = Math.cos(a) * dpr;
+        const sin = Math.sin(a) * dpr;
+        ctx.setTransform(cos, sin, -sin, cos, x * dpr, y * dpr);
+        ctx.globalAlpha = Math.min(1, p * 3) * fade;
         const outer = (inner + 2 * border) * scale;
-        ctx.globalAlpha = e * fade;
         ctx.fillStyle = FRAME;
-        ctx.fillRect(cx - outer / 2, cy - outer / 2, outer, outer);
+        ctx.fillRect(-outer / 2, -outer / 2, outer, outer);
         const s = inner * scale;
-        ctx.drawImage(sprite, (c.tile % meta.cols) * meta.tile, Math.floor(c.tile / meta.cols) * meta.tile, meta.tile, meta.tile, cx - s / 2, cy - s / 2, s, s);
+        ctx.drawImage(sprite, (c.tile % meta.cols) * meta.tile, Math.floor(c.tile / meta.cols) * meta.tile, meta.tile, meta.tile, -s / 2, -s / 2, s, s);
       }
-      // Horn (Crown) and wing (Jacobs), each moving with its own 7, outlined like the prints.
-      const { oy, unit, hornX, wingX } = state.at;
-      const f = easeOut(clamp01((t - FLOURISH[0]) / (FLOURISH[1] - FLOURISH[0])));
-      if (f > 0) {
-        ctx.globalAlpha = f * fade;
-        ctx.lineJoin = "round";
-        for (const [path, color, x] of [[hornPath, HORN, hornX - CROWN_LEFT * unit], [wingPath, WING, wingX - JACOBS_RIGHT * unit]] as const) {
-          ctx.save();
-          ctx.translate(x, oy);
-          ctx.scale(unit, unit);
-          ctx.fillStyle = color;
-          ctx.fill(path);
-          ctx.lineWidth = (size > 24 ? 2 : 1.5) / unit;
-          ctx.strokeStyle = FRAME;
-          ctx.stroke(path);
-          ctx.restore();
-        }
-      }
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
       ctx.globalAlpha = 1;
     };
 
