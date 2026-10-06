@@ -1,11 +1,16 @@
 import { getSiteText } from "@/lib/data/settings";
 import { ArrowRight } from "lucide-react";
 import { ButtonLink } from "@/components/ui/Button";
+import { HERO_MOSAIC } from "@/lib/content/hero-mosaic";
+import { signedYearbookUrl, yearbookCdnConfigured } from "@/lib/yearbook/sign";
 import { HeroController } from "./HeroController";
+import { HeroMosaic } from "./HeroMosaic";
 import "./hero.css";
 
 export async function Hero() {
   const t = await getSiteText();
+  // The portrait sprite lives with the yearbook images (signed, per-day URL); no CDN → no mosaic.
+  const mosaic = yearbookCdnConfigured() ? signedYearbookUrl("hero/mosaic.webp") : null;
   return (
     <section className="hero" aria-labelledby="hero-title">
       <div className="hero-half hero-left halftone">
@@ -25,6 +30,7 @@ export async function Hero() {
         <span className="hero-seam-stitch" />
         <span className="hero-seam-line" />
       </div>
+      {mosaic ? <HeroMosaic src={mosaic} meta={HERO_MOSAIC} /> : null}
 
       <div className="hero-content">
         <p className="type-eyebrow text-white">{t["home.hero_eyebrow"]}</p>
