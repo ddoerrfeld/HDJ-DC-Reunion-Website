@@ -13,7 +13,7 @@
 5. **No fake yearbook pages.** At Phase 5, stop and request files from the owner using the SPEC §10.1 checklist. Max 3 grey test images.
 6. **Corrected spellings:** Prairie Ridge, Dundee-Crown, Crystal Lake South, Randall Oaks, Pickleball, Pickle Haus.
 7. **Event:** Fri Oct 8 – Sun Oct 10, 2027. All times `America/Chicago`.
-8. **Site is passcode-gated** in preview (SPEC §12.1, Stage A).
+8. **Site is live (Stage B, since 2026-10-16):** no passcode gate; the yearbook/Who’s Coming section gate is on (SPEC §12.1).
 9. **TypeScript strict.** No `any` without an explaining comment. Commit at end of each phase.
 10. **Never use Dundee-Crown Chargers identity** (post-1983). Crown = Vikings, royal blue & white. Jacobs = Golden Eagles, brown & gold. No NFL/pro-team marks.
 11. Typographic copy: ’77 (right single quote), en dashes for ranges (3:30–4:30 PM), real quotes.
@@ -53,7 +53,7 @@ Fonts (via `next/font`): **Graduate** (display, uppercase, +2% tracking, never b
 | 5 — Yearbooks | ✅ Approved by owner 2026-10-01. Name search (OCR) turned on. School marks: Jacobs 1977 HDJ mark + original Crown helmet (owner deferred to judgment). |
 | 6 — Directory | ✅ Approved by owner |
 | 7 — Admin | ✅ Approved by owner (2026-10-05). Production admin: dan@616flatsticks.com (owner can add/remove in Settings). |
-| 8 — Hardening & Launch | Built — awaiting owner approval (2026-10-05). **Site stays in preview (passcode) until the owner says launch** → `node scripts/launch.mts go`. |
+| 8 — Hardening & Launch | ✅ **Launched 2026-10-16** on the owner’s go: SITE_STAGE=production on Vercel (both targets) and redeployed. Passcode gate and preview ribbon off; public pages indexable; yearbooks and Who’s Coming behind the classmate check. Test-data purge skipped: SUPABASE_ACCESS_TOKEN was invalid that day (prod held only real data when last checked). Rollback: `node scripts/launch.mts rollback`. |
 
 ## Approved deviations from SPEC
 
